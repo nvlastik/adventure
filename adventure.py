@@ -1,6 +1,16 @@
 import pygame
 from pygame.locals import *
 import sys
+import maps
+
+
+def load_map(map):
+    vsv = []
+    for y, i in enumerate(map):
+        for x, j in enumerate(i):
+            if j == 1:
+                vsv.append(f"(w * {x}, h * {y}, w, h)")
+    return vsv
 
 
 pygame.init()
@@ -179,20 +189,6 @@ class map_2(play):
     def init(self):
         w_n, h_n = pygame.display.get_surface().get_size()
         w, h = w_n // 40, h_n // 40
-        self.trigger = {Trigger((w * 15, 0, w * 10, h * 2)): [map_1, "(w * 19, h * 37, w, h * 2)"]}
-        self.c_main = (184, 182, 184)  # цвет_основной
-        self.c_sec = (72, 185, 81)  # цвет_второй
-        self.gran = [(0, 0, w * 2, h * 40),  # левая полоса
-                     (0, 0, w * 15, h * 2),  # верхняя левая
-                     (0, h * 38, w_n, h * 4),  # нижняя
-                     (w * 25, 0, w * 15, h * 2),  # правая верхняя
-                     ]
-
-
-class map_2(play):
-    def init(self):
-        w_n, h_n = pygame.display.get_surface().get_size()
-        w, h = w_n // 40, h_n // 40
         self.trigger = {Trigger((w * 15, 0, w * 10, h * 2)): [map_1, "(w * 19, h * 37, w, h * 2)"],
                         Trigger((w * 38, 0, w * 2, h_n)): [map_3, "(w * 3, h * 20, w, h * 2)"],
                         Trigger((0, 0, w * 2, h_n)): [map_4, "(w * 37, h * 19, w, h * 2)"]}
@@ -356,7 +352,8 @@ class map_9(play):
         w_n, h_n = pygame.display.get_surface().get_size()
         w, h = w_n // 40, h_n // 40
         self.trigger = {Trigger((w * 34, h * 37, w * 4, h * 3)): [map_6, "(w * 35, h * 3, w, h * 2)"],
-                        Trigger((w * 39, h * 28, w, h * 9)): [map_8, "(w * 2, h * 32, w, h * 2)"]}
+                        Trigger((w * 39, h * 28, w, h * 9)): [map_8, "(w * 2, h * 32, w, h * 2)"],
+                        Trigger((w * 14, 0, w * 12, h * 2)): [map_10, "(w * 19, h * 37, w, h * 2)"]}
         self.c_main = (184, 182, 184)  # цвет_основной
         self.c_sec = (46, 64, 232)  # цвет_второй
         self.gran = [(0, 0, w * 12, h * 2),
@@ -380,6 +377,36 @@ class map_9(play):
                      (w * 24, h * 37, w * 4, h * 3),
                      (w * 6, h * 28, w, h * 12),
                      (w * 33, h * 28, w, h * 12),
+                     ]
+
+
+class map_10(play):
+    def init(self):
+        w_n, h_n = pygame.display.get_surface().get_size()  # получаем размеры окна сейчас
+        w, h = w_n // 40, h_n // 40  # делим (потом будем размещать объекты исходя из этих размеров (пропорционально))
+        self.trigger = {Trigger((w * 15, h * 39, w * 10, h * 2)): [map_9, "(w * 19, h * 3, w, h * 2)"]}
+        # если игрок попадает в прямоугольник, записанный в trigger, то переносится на другую карту
+        self.c_main = (184, 182, 184)  # цвет_основной, фон
+        self.c_sec = (0, 0, 0)  # цвет_второй
+        # gran - все границы на карте
+        # чуть позже они отрисуются и запишутся в группы спрайтов
+        self.gran = [(0, 0, w * 2, h * 40),  # левая полоса
+                     (0, 0, w * 10, h * 4),  # верхняя левая
+                     (0, h * 38, w * 15, h * 4),  # нижняя левая
+                     (w * 11, 0, w, h * 6),  # столбик 1
+                     (w * 13, 0, w, h * 6),  # столбик 2
+                     (w * 15, 0, w, h * 6),  # столбик 3
+                     (w * 25, h * 38, w * 15, h * 4),  # правая нижняя
+                     (w * 30, 0, w * 10, h * 4),  # правая верхняя
+                     (w * 24, 0, w, h * 6),  # столбик 4
+                     (w * 26, 0, w, h * 6),  # столбик 5
+                     (w * 28, 0, w, h * 6),  # столбик 6
+                     (w * 9, h * 4, w * 7, h * 13),  # квадрат левый верхний
+                     (w * 24, h * 4, w * 7, h * 13),  # квадрат правый верхний
+                     (w * 11, h * 9, w * 17, h * 15),  # прямоугольник посередине
+                     (w * 11, h * 24, w * 7, h * 7),  # квадрат левый нижний
+                     (w * 21, h * 24, w * 7, h * 7),  # квадрат правый нижний
+                     (w * 38, 0, w * 2, h * 40),  # правая полоса
                      ]
 
 
