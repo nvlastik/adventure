@@ -261,7 +261,7 @@ class map_3(play):
         w, h = w_n // 40, h_n // 40
         self.trigger = {Trigger((0, 0, w * 2, h_n)): [map_2, "(w * 37, h * 19, w, h * 2)"],
                         Trigger((w * 15, h * 38, w * 10, h * 2)): [map_16,
-                                                                   "(w * 18, h * 3, w, h * 2)"],
+                                                                   "(w * 18, h * 6, w, h * 2)"],
                         Trigger((w * 38, h * 2, w * 2, h * 35)): [map_3, "(w * 33, h * 24, w, h * 2)"]}
         self.c_main = (184, 182, 184)  # цвет_основной
         self.c_sec = (171, 176, 60)  # цвет_второй
