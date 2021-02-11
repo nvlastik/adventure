@@ -197,7 +197,7 @@ class map_zero(play):
         w_n, h_n = pygame.display.get_surface().get_size()
         w, h = w_n // 40, h_n // 40
         self.trigger = {
-            Trigger((w * 15, h * 38, w * 8, h * 2)): [map_1, "(w * 19, h * 33, w, h * 2)"]}
+            Trigger((w * 15, h * 38, w * 10, h * 2)): [map_1, "(w * 19, h * 33, w, h * 2)"]}
         self.c_main = (184, 182, 184)
         self.c_sec = (239, 223, 37)
         self.gran = []
@@ -511,7 +511,7 @@ class map_21(play):
             Trigger((w * 21, h * 2, w * 4, h * 2)): [map_19, "(w * 23, h * 35, w, h * 2)"],
             Trigger((w * 30, h * 2, w * 3, h * 2)): [map_19, "(w * 32, h * 35, w, h * 2)"],
             Trigger((w * 35, h * 2, w * 3, h * 2)): [map_19, "(w * 36, h * 35, w, h * 2)"],
-            Trigger((w * 38, h * 22, w * 9, h * 2)): [map_22, "(w * 5, h * 25, w, h * 2)"],
+            Trigger((w * 38, h * 22, w * 2, h * 9)): [map_22, "(w * 5, h * 25, w, h * 2)"],
             Trigger((w * 38, h * 32, w * 2, h * 6)): [map_22, "(w * 5, h * 35, w, h * 2)"],
             Trigger((w * 19, h * 15, w * 4, h * 2)): [map_21, "(w * 19, h * 25, w, h * 2)"], # телепортация за стену
             Trigger((w * 3, h * 22, w * 1, h * 9)): [map_22, "(w * 35, h * 25, w, h * 2)"],
@@ -536,9 +536,9 @@ class map_22(play):
             Trigger((w * 24, h * 2, w * 4, h * 2)): [map_20, "(w * 24, h * 33, w, h * 2)"],
             Trigger((w * 3, h * 2, w * 4, h * 2)): [map_20, "(w * 4, h * 33, w, h * 2)"],
             Trigger((w * 33, h * 2, w * 4, h * 2)): [map_20, "(w * 33, h * 33, w, h * 2)"],
-            Trigger((w * 0, h * 23, w * 1, h * 10)): [map_21, "(w * 35, h * 25, w, h * 2)"],
+            Trigger((w * 0, h * 22, w * 1, h * 10)): [map_21, "(w * 35, h * 25, w, h * 2)"],
             Trigger((w * 0, h * 33, w * 1, h * 10)): [map_21, "(w * 35, h * 35, w, h * 2)"],
-            Trigger((w * 38, h * 23, w * 1, h * 9)): [map_21, "(w * 5, h * 25, w, h * 2)"],
+            Trigger((w * 38, h * 22, w * 1, h * 9)): [map_21, "(w * 5, h * 25, w, h * 2)"],
             Trigger((w * 38, h * 33, w * 1, h * 10)): [map_21, "(w * 5, h * 35, w, h * 2)"],
         }
         self.c_main = (184, 182, 184)
