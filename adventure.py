@@ -102,7 +102,7 @@ class play:
     def __init__(self, screen, spawn):
         self.spawn = spawn
         self.screen = screen
-        self.step = 2  # кол-во шагов за один раз
+        self.step = 10  # кол-во шагов за один раз
         self.init()
         self.initSU()
         self.run()
@@ -112,10 +112,12 @@ class play:
         global walk_w, walk_a, walk_s, walk_d
         while running:
             # обработка событий
-            eventnow = {}
+            eventnow = {KEYDOWN: [], KEYUP: []}
+
             for i in pygame.event.get():
                 if i.type == KEYDOWN or i.type == KEYUP:
-                    eventnow.update([(i.type, i.key)])
+                    eventnow[i.type].append(i.key)
+
                 else:
                     eventnow.update([(i.type, None)])
 
@@ -125,22 +127,27 @@ class play:
                 break
 
             if KEYDOWN in eventnow:
-                if eventnow[KEYDOWN] == K_w:  # шаг вверх
+                if K_w in eventnow[KEYDOWN]:  # шаг вверх
                     walk_w = True
-                if eventnow[KEYDOWN] == K_a:  # влево
+                if K_a in eventnow[KEYDOWN]:  # влево
                     walk_a = True
-                if eventnow[KEYDOWN] == K_s:  # вниз
+                if K_s in eventnow[KEYDOWN]:  # вниз
                     walk_s = True
-                if eventnow[KEYDOWN] == K_d:  # вправо
+                if K_d in eventnow[KEYDOWN]:  # вправо
                     walk_d = True
+                if K_ESCAPE in eventnow[KEYDOWN]:  # завершение работы при ESC
+                    running = False
+                    break
+
+
             if KEYUP in eventnow:
-                if eventnow[KEYUP] == K_w:  # шаг вверх
+                if K_w in eventnow[KEYUP]:  # шаг вверх
                     walk_w = False
-                if eventnow[KEYUP] == K_a:  # влево
+                if K_a in eventnow[KEYUP]:  # влево
                     walk_a = False
-                if eventnow[KEYUP] == K_s:  # вниз
+                if K_s in eventnow[KEYUP]:  # вниз
                     walk_s = False
-                if eventnow[KEYUP] == K_d:  # вправо
+                if K_d in eventnow[KEYUP]:  # вправо
                     walk_d = False
 
 
@@ -160,18 +167,11 @@ class play:
                     a(self.screen, self.trigger[i][1])
                     break
 
-            if KEYDOWN in eventnow:
-                kk = pygame.key.get_pressed()
-                if kk[K_ESCAPE]:  # завершение работы при ESC
-                    running = False
-                    break
-
             if WINDOWRESIZED in eventnow:  # перерисовка при изменении размеров окна
                 running = False
                 self.init()
                 self.initSU()
                 self.run()
-
 
         # отрисовка
             if running:
@@ -179,6 +179,7 @@ class play:
                 self.all_sprites.draw(screen)
                 pygame.display.flip()
                 clock.tick(fps)
+
     def initSU(self):
         screen.fill(self.c_main)  # залить основным цветом
         w_n, h_n = pygame.display.get_surface().get_size()
