@@ -274,13 +274,38 @@ class map_5(play):
     def init(self):
         w_n, h_n = pygame.display.get_surface().get_size()
         w, h = w_n // 40, h_n // 40
-        self.trigger = {Trigger((w * 38, h * 15, w * 1, h * 9)): [map_4, "(w * 20, h * 15, w, h * 2)"]}
+        self.trigger = {Trigger((w * 38, h * 15, w * 1, h * 9)): [map_4, "(w * 20, h * 15, w, h * 2)"],
+                        Trigger((w * 0, h * 26, w * 1, h * 9)): [map_6, "(w * 36, h * 33, w, h * 2)"]}
         self.c_main = (184, 182, 184)
         self.c_sec = (232, 110, 34)
         self.gran = []
         for i in load_map(mas_map_5[::]):
             self.gran.append(eval(i))
 
+
+class map_6(play):
+    def init(self):
+        w_n, h_n = pygame.display.get_surface().get_size()
+        w, h = w_n // 40, h_n // 40
+        self.trigger = {Trigger((w * 39, h * 24, w * 1, h * 9)): [map_5, "(w * 5, h * 30, w, h * 2)"],
+                        Trigger((w * 13, h * 1, w * 9, h * 1)): [map_7, "(w * 20, h * 35, w, h * 2)"]}
+        self.c_main = (184, 182, 184)
+        self.c_sec = (232, 110, 34)
+        self.gran = []
+        for i in load_map(mas_map_6[::]):
+            self.gran.append(eval(i))
+
+
+class map_7(play):
+    def init(self):
+        w_n, h_n = pygame.display.get_surface().get_size()
+        w, h = w_n // 40, h_n // 40
+        self.trigger = {Trigger((w * 15, h * 38, w * 9, h * 1)): [map_6, "(w * 10, h * 5, w, h * 2)"]}
+        self.c_main = (184, 182, 184)
+        self.c_sec = (232, 110, 34)
+        self.gran = []
+        for i in load_map(mas_map_7[::]):
+            self.gran.append(eval(i))
 
 
 
