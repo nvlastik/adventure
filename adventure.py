@@ -21,7 +21,7 @@ walk_a = False
 walk_s = False
 walk_d = False
 
-fps = 60
+fps = 120
 clock = pygame.time.Clock()
 
 pygame.init()
@@ -99,11 +99,10 @@ class start:
 
 
 class play:
-
     def __init__(self, screen, spawn):
         self.spawn = spawn
         self.screen = screen
-        self.step = 36  # кол-во шагов за один раз
+        self.step = 2  # кол-во шагов за один раз
         self.init()
         self.initSU()
         self.run()
@@ -111,68 +110,75 @@ class play:
     def run(self):
         running = True
         global walk_w, walk_a, walk_s, walk_d
-
         while running:
-            for event in pygame.event.get():
-                print(event)  # ОТЛД
-                if event.type == QUIT:  # завершение работы
+            # обработка событий
+            eventnow = {}
+            for i in pygame.event.get():
+                if i.type == KEYDOWN or i.type == KEYUP:
+                    eventnow.update([(i.type, i.key)])
+                else:
+                    eventnow.update([(i.type, None)])
+
+            if QUIT in eventnow:  # завершение работы
+                running = False
+                pygame.quit()
+                break
+
+            if KEYDOWN in eventnow:
+                if eventnow[KEYDOWN] == K_w:  # шаг вверх
+                    walk_w = True
+                if eventnow[KEYDOWN] == K_a:  # влево
+                    walk_a = True
+                if eventnow[KEYDOWN] == K_s:  # вниз
+                    walk_s = True
+                if eventnow[KEYDOWN] == K_d:  # вправо
+                    walk_d = True
+            if KEYUP in eventnow:
+                if eventnow[KEYUP] == K_w:  # шаг вверх
+                    walk_w = False
+                if eventnow[KEYUP] == K_a:  # влево
+                    walk_a = False
+                if eventnow[KEYUP] == K_s:  # вниз
+                    walk_s = False
+                if eventnow[KEYUP] == K_d:  # вправо
+                    walk_d = False
+
+
+            if walk_w:
+                self.player.update(0, -self.step, self.borders)
+            if walk_a:
+                self.player.update(-self.step, 0, self.borders)
+            if walk_s:  # вниз
+                self.player.update(0, self.step, self.borders)
+            if walk_d:  # вправо
+                self.player.update(self.step, 0, self.borders)
+
+            for i in self.trigger.keys():  # не пришел ли пользователь в триггер
+                if pygame.sprite.collide_rect(self.player, i):
+                    running = False
+                    a = self.trigger[i][0]
+                    a(self.screen, self.trigger[i][1])
+                    break
+
+            if KEYDOWN in eventnow:
+                kk = pygame.key.get_pressed()
+                if kk[K_ESCAPE]:  # завершение работы при ESC
                     running = False
                     break
 
-                if event.type == KEYDOWN:
-                    if event.key == K_w:  # шаг вверх
-                        walk_w = True
-                    if event.key == K_a:  # влево
-                        walk_a = True
-                    if event.key == K_s:  # вниз
-                        walk_s = True
-                    if event.key == K_d:  # вправо
-                        walk_d = True
-                if event.type == KEYUP:
-                    if event.key == K_w:  # шаг вверх
-                        walk_w = False
-                    if event.key == K_a:  # влево
-                        walk_a = False
-                    if event.key == K_s:  # вниз
-                        walk_s = False
-                    if event.key == K_d:  # вправо
-                        walk_d = False
+            if WINDOWRESIZED in eventnow:  # перерисовка при изменении размеров окна
+                running = False
+                self.init()
+                self.initSU()
+                self.run()
 
-                if walk_w:
-                    self.player.update(0, -self.step, self.borders)
-                if walk_a:
-                    self.player.update(-self.step, 0, self.borders)
-                if walk_s:  # вниз
-                    self.player.update(0, self.step, self.borders)
-                if walk_d:  # вправо
-                    self.player.update(self.step, 0, self.borders)
 
-                for i in self.trigger.keys():  # не пришел ли пользователь в триггер
-                    if pygame.sprite.collide_rect(self.player, i):
-                        running = False
-                        a = self.trigger[i][0]
-                        a(self.screen, self.trigger[i][1])
-                        break
-
-                if event.type == KEYDOWN:
-                    kk = pygame.key.get_pressed()
-                    if kk[K_ESCAPE]:  # завершение работы при ESC
-                        running = False
-                        break
-
-                if event.type == WINDOWRESIZED:  # перерисовка при изменении размеров окна
-                    running = False
-                    self.init()
-                    self.initSU()
-                    self.run()
-
-                # отрисовка
-                if running:
-                    screen.fill(self.c_main)
-                    self.all_sprites.draw(screen)
-                    pygame.display.flip()
-                    clock.tick(fps)
-
+        # отрисовка
+            if running:
+                screen.fill(self.c_main)
+                self.all_sprites.draw(screen)
+                pygame.display.flip()
+                clock.tick(fps)
     def initSU(self):
         screen.fill(self.c_main)  # залить основным цветом
         w_n, h_n = pygame.display.get_surface().get_size()
@@ -191,6 +197,7 @@ class play:
         self.all_sprites.add(self.player)
         self.all_sprites.draw(screen)  # отрисовываем спрайты
         pygame.display.flip()
+
 
 class map_zero(play):
     def init(self):
