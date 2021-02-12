@@ -1,7 +1,7 @@
 import pygame
 from pygame.locals import *
-import sys
 from maps import *
+import os
 
 
 def load_map(map):
@@ -13,9 +13,26 @@ def load_map(map):
     return vsv
 
 
-open_1 = False
+def load_image(name, colorkey=None):
+    fullname = os.path.join('data', name)
+    if not os.path.isfile(fullname):
+        print(f"Файл с изображением '{fullname}' не найден")
+        raise SystemExit
+    image = pygame.image.load(fullname)
+    return image
+
+
+def set_color(img, color):
+    for x in range(img.get_width()):
+        for y in range(img.get_height()):
+            color.a = img.get_at((x, y)).a
+            img.set_at((x, y), color)
+    return img
+
+
+open_1 = True
 open_10 = False
-open_23 = True
+open_23 = False
 
 walk_w = False
 walk_a = False
@@ -36,6 +53,21 @@ class Trigger:
     def __init__(self, rect):
         print(rect)
         self.rect = rect
+
+
+class key(pygame.sprite.Sprite):
+    def __init__(self, grp, rct, clr=None):
+        super().__init__(grp)
+        self.image = load_image("key.png")
+        self.image = pygame.transform.rotozoom(self.image, 0, ((rct[2] / self.image.get_width()) + (rct[3] / self.image.get_height()) / 2))
+        self.rect = self.image.get_rect()
+        print(self.rect)
+        self.rect.x, self.rect.y = rct[0], rct[1]
+        if clr:
+            set_color(self.image, clr)
+
+    def set_color(self, clr):
+        set_color(self.image, clr)
 
 
 class GR(pygame.sprite.Sprite):
@@ -102,6 +134,8 @@ class start:
 class play:
     def __init__(self, screen, spawn):
         print(self.__class__)
+        self.items = []
+        self.items_spr = []
         self.spawn = spawn
         self.screen = screen
         self.step = 10  # кол-во шагов за один раз
@@ -158,12 +192,16 @@ class play:
             if walk_d:  # вправо
                 self.player.update(self.step, 0, self.borders)
 
-            for i in self.trigger.keys():  # не пришел ли пользователь в триггер
-                if pygame.sprite.collide_rect(self.player, i):
+            for tg in self.trigger.keys():  # не пришел ли пользователь в триггер
+                if pygame.sprite.collide_rect(self.player, tg):
                     running = False
-                    a = self.trigger[i][0]
-                    a(self.screen, self.trigger[i][1])
+                    a = self.trigger[tg][0]
+                    a(self.screen, self.trigger[tg][1])
                     break
+
+            for it in self.items_spr:
+                if pygame.sprite.collide_rect(self.player, it):
+                    print(it.__class__)
 
             if WINDOWRESIZED in eventnow:  # перерисовка при изменении размеров окна
                 running = False
@@ -192,6 +230,11 @@ class play:
                 a = GR(self.all_sprites, rr, self.c_sec)  # цвет, заданный в классе карты
             self.borders.add(a)
 
+        for it in self.items:
+            a = eval(it)
+            self.all_sprites.add(a)
+            self.items_spr.append(a)
+
         self.player = GR(self.all_sprites, eval(self.spawn), self.c_sec)  # игрок
         self.all_sprites.add(self.player)
         self.all_sprites.draw(screen)  # отрисовываем спрайты
@@ -203,12 +246,13 @@ class map_zero(play):
         w_n, h_n = pygame.display.get_surface().get_size()
         w, h = w_n // 40, h_n // 40
         self.trigger = {
-            Trigger((w * 15, h * 38, w * 10, h * 2)): [map_1, "(w * 19, h * 33, w, h * 2)"]}
+            Trigger((w * 15, h * 38, w * 10, h * 2)): [map_1, "(w * 19, h * 32, w, h * 2)"]}
         self.c_main = (184, 182, 184)
         self.c_sec = (239, 223, 37)
         self.gran = []
         for i in load_map(mas_map_26[::]):
             self.gran.append(eval(i))
+        self.items = ["key(self.all_sprites, (w * 20, h * 20, w, h))"]
 
 
 class map_1(play):
@@ -217,7 +261,7 @@ class map_1(play):
         w, h = w_n // 40, h_n // 40  # делим (потом будем размещать объекты исходя из этих размеров (пропорционально))
         self.trigger = {
             Trigger((w * 15, h * 39, w * 10, h * 2)): [map_2, "(w * 19, h * 3, w, h * 2)"],
-            Trigger((w * 16, h * 24, w * 6, h * 2)): [map_zero, "(w * 20, h * 33, w, h * 2)"]}
+            Trigger((w * 16, h * 0, w * 8, h * 2)): [map_zero, "(w * 19, h * 32, w, h * 2)"]}
         # если игрок попадает в прямоугольник, записанный в trigger, то переносится на другую карту
         self.c_main = (184, 182, 184)  # цвет_основной, фон
         self.c_sec = (239, 223, 37)  # цвет_второй
@@ -291,6 +335,7 @@ class map_4(play):
                      (0, h * 38, w_n, h * 4),  # нижняя
                      (w * 25, 0, w * 15, h * 2),  # правая верхняя
                      ]
+
 class map_5(play):
     def init(self):
         w_n, h_n = pygame.display.get_surface().get_size()
@@ -656,6 +701,9 @@ class map_28(play):
         self.gran = []
         for i in load_map(mas_map_25[::]):
             self.gran.append(eval(i))
+
+
+items_onmap = {map_zero: ["key(self.all_sprites, (0, 0, w, h))"]}
 
 
 start(screen)
