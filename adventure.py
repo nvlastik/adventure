@@ -15,6 +15,7 @@ def load_map(map):
 
 open_1 = False
 open_10 = False
+open_23 = True
 
 walk_w = False
 walk_a = False
@@ -100,6 +101,7 @@ class start:
 
 class play:
     def __init__(self, screen, spawn):
+        print(self.__class__)
         self.spawn = spawn
         self.screen = screen
         self.step = 10  # кол-во шагов за один раз
@@ -113,11 +115,9 @@ class play:
         while running:
             # обработка событий
             eventnow = {KEYDOWN: [], KEYUP: []}
-
             for i in pygame.event.get():
                 if i.type == KEYDOWN or i.type == KEYUP:
                     eventnow[i.type].append(i.key)
-
                 else:
                     eventnow.update([(i.type, None)])
 
@@ -139,7 +139,6 @@ class play:
                     running = False
                     break
 
-
             if KEYUP in eventnow:
                 if K_w in eventnow[KEYUP]:  # шаг вверх
                     walk_w = False
@@ -149,7 +148,6 @@ class play:
                     walk_s = False
                 if K_d in eventnow[KEYUP]:  # вправо
                     walk_d = False
-
 
             if walk_w:
                 self.player.update(0, -self.step, self.borders)
@@ -538,8 +536,8 @@ class map_22(play):
         w_n, h_n = pygame.display.get_surface().get_size()
         w, h = w_n // 40, h_n // 40
         self.trigger = {
-            Trigger((w * 15, h * 38, w * 8, h * 2)): [map_23, "(w * 16, h * 33, w, h * 2)"],
-            Trigger((w * 18, h * 2, w * 4, h * 2)): [map_20, "(w * 23, h * 33, w, h * 2)"],
+            Trigger((w * 15, h * 38, w * 8, h * 2)): [map_23, "(w * 19, h * 31, w, h * 2)"],
+            Trigger((w * 18, h * 2, w * 4, h * 2)): [map_20, "(w * 20, h * 33, w, h * 2)"],
             Trigger((w * 13, h * 2, w * 4, h * 2)): [map_20, "(w * 13, h * 33, w, h * 2)"],
             Trigger((w * 24, h * 2, w * 4, h * 2)): [map_20, "(w * 24, h * 33, w, h * 2)"],
             Trigger((w * 3, h * 2, w * 4, h * 2)): [map_20, "(w * 4, h * 33, w, h * 2)"],
@@ -560,9 +558,8 @@ class map_23(play):  # белый замок
     def init(self):
         w_n, h_n = pygame.display.get_surface().get_size()
         w, h = w_n // 40, h_n // 40
-        self.trigger = {
-            Trigger((w * 16, h * 38, w * 9, h * 2)): [map_24, "(w * 16, h * 5, w, h * 2)"],
-            Trigger((w * 16, h * 24, w * 6, h * 2)): [map_22, "(w * 16, h * 33, w, h * 2)"], }
+        self.trigger = {Trigger((w * 16, h * 38, w * 9, h * 1)): [map_24, "(w * 16, h * 5, w, h * 2)"],
+                        Trigger((w * 16, h * 0, w * 8, h * 2)): [map_22, "(w * 19, h * 32, w, h * 2)"]}
         self.c_main = (184, 182, 184)
         self.c_sec = (255, 255, 255)
         self.gran = [(0, 0, w * 2, h * 40),  # левая полоса
@@ -579,13 +576,13 @@ class map_23(play):  # белый замок
                      (w * 9, h * 4, w * 7, h * 13),  # квадрат левый верхний
                      (w * 24, h * 4, w * 7, h * 13),  # квадрат правый верхний
                      (w * 38, 0, w * 2, h * 40),  # правая полоса
-                     (w * 21, h * 9, w * 7, h * 15),
+                     (w * 22, h * 9, w * 7, h * 15),
                      (w * 11, h * 9, w * 7, h * 15),
                      (w * 11, h * 24, w * 7, h * 7),  # квадрат левый нижний
-                     (w * 21, h * 24, w * 7, h * 7),  # квадрат правый нижний
+                     (w * 22, h * 24, w * 7, h * 7),  # квадрат правый нижний
                      ]
 
-        if not open_1:
+        if not open_23:
             self.gran.append((w * 11, h * 9, w * 17, h * 15))  # прямоугольник посередине
 
 
