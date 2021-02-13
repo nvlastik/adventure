@@ -22,17 +22,13 @@ def load_image(name, colorkey=None):
     return image
 
 
-def set_color(img, color):
+def set_color_for_img(img, color):
     for x in range(img.get_width()):
         for y in range(img.get_height()):
             color.a = img.get_at((x, y)).a
             img.set_at((x, y), color)
     return img
 
-
-open_1 = True
-open_10 = False
-open_23 = False
 
 walk_w = False
 walk_a = False
@@ -61,13 +57,12 @@ class key(pygame.sprite.Sprite):
         self.image = load_image("key.png")
         self.image = pygame.transform.rotozoom(self.image, 0, ((rct[2] / self.image.get_width()) + (rct[3] / self.image.get_height()) / 2))
         self.rect = self.image.get_rect()
-        print(self.rect)
         self.rect.x, self.rect.y = rct[0], rct[1]
         if clr:
-            set_color(self.image, clr)
+            set_color_for_img(self.image, clr)
 
     def set_color(self, clr):
-        set_color(self.image, clr)
+        set_color_for_img(self.image, clr)
 
 
 class GR(pygame.sprite.Sprite):
@@ -78,11 +73,32 @@ class GR(pygame.sprite.Sprite):
         self.rect = self.image.get_rect()
         self.rect.x, self.rect.y = rct[0], rct[1]
 
+
+class Player(pygame.sprite.Sprite):
+    def __init__(self, grp, rct, clr):
+        super().__init__(grp)
+        self.color = clr
+        self.image = pygame.Surface((rct[2], rct[3]))
+        self.image.fill(self.color)
+        self.rect = self.image.get_rect()
+        self.rect.x, self.rect.y = rct[0], rct[1]
+        self.items = []
+
     def update(self, mm1, mm2, borders):
         self.rect = self.rect.move(mm1, mm2)
         if any([pygame.sprite.collide_rect(self, i) for i in
                 borders]):  # если пересекается потом граница
             self.rect = self.rect.move(-mm1, -mm2)
+
+    def set_color(self, clr):
+        self.color = clr
+        self.image.fill(self.color)
+
+    def spawn(self, rct):
+        self.image = pygame.Surface((rct[2], rct[3]))
+        self.image.fill(self.color)
+        self.rect = self.image.get_rect()
+        self.rect.x, self.rect.y = rct[0], rct[1]
 
 
 class start:
@@ -132,10 +148,10 @@ class start:
 
 
 class play:
-    def __init__(self, screen, spawn):
+    def __init__(self, screen, spawn, pl=None):
         print(self.__class__)
-        self.items = []
-        self.items_spr = []
+        self.pl = pl
+        self.items_spr = {}
         self.spawn = spawn
         self.screen = screen
         self.step = 10  # кол-во шагов за один раз
@@ -196,12 +212,16 @@ class play:
                 if pygame.sprite.collide_rect(self.player, tg):
                     running = False
                     a = self.trigger[tg][0]
-                    a(self.screen, self.trigger[tg][1])
+                    a(self.screen, self.trigger[tg][1], self.player)
                     break
-
-            for it in self.items_spr:
-                if pygame.sprite.collide_rect(self.player, it):
-                    print(it.__class__)
+            items_spr_copy = self.items_spr.copy()
+            for name, item in items_spr_copy.items():  # подбор предметов
+                if pygame.sprite.collide_rect(self.player, item):
+                    self.player.items.append(name)
+                    self.items_spr.pop(name)
+                    self.all_sprites.remove(item)
+                    items_onmap[self.__class__].pop(name)
+            print(self.player.items)
 
             if WINDOWRESIZED in eventnow:  # перерисовка при изменении размеров окна
                 running = False
@@ -217,11 +237,19 @@ class play:
                 clock.tick(fps)
 
     def initSU(self):
-        screen.fill(self.c_main)  # залить основным цветом
         w_n, h_n = pygame.display.get_surface().get_size()
         w, h = w_n // 40, h_n // 40
+        screen.fill(self.c_main)  # залить основным цветом
         self.all_sprites = pygame.sprite.Group()  # все спрайты
         self.borders = pygame.sprite.Group()  # границы (прямоугольники)
+
+        self.player = self.pl if self.pl else Player(self.all_sprites, eval(self.spawn), self.c_sec)  # игрок
+        self.player.spawn(eval(self.spawn))  # спавним игрока
+        self.player.set_color(self.c_sec)
+        self.all_sprites.add(self.player)
+
+        if "open_castle" in self.__dir__():
+            self.open_castle(w, h)
 
         for rr in self.gran:
             if len(rr) == 2:  # если передан цвет
@@ -230,13 +258,12 @@ class play:
                 a = GR(self.all_sprites, rr, self.c_sec)  # цвет, заданный в классе карты
             self.borders.add(a)
 
-        for it in self.items:
-            a = eval(it)
-            self.all_sprites.add(a)
-            self.items_spr.append(a)
+        if self.__class__ in items_onmap:
+            for name, it in items_onmap[self.__class__].items():
+                a = eval(it)
+                self.all_sprites.add(a)
+                self.items_spr[name] = a
 
-        self.player = GR(self.all_sprites, eval(self.spawn), self.c_sec)  # игрок
-        self.all_sprites.add(self.player)
         self.all_sprites.draw(screen)  # отрисовываем спрайты
         pygame.display.flip()
 
@@ -246,13 +273,12 @@ class map_zero(play):
         w_n, h_n = pygame.display.get_surface().get_size()
         w, h = w_n // 40, h_n // 40
         self.trigger = {
-            Trigger((w * 15, h * 38, w * 10, h * 2)): [map_1, "(w * 19, h * 32, w, h * 2)"]}
+            Trigger((w * 15, h * 38, w * 10, h * 2)): [map_1, "(w * 19, h * 31, w, h * 2)"]}
         self.c_main = (184, 182, 184)
         self.c_sec = (239, 223, 37)
         self.gran = []
         for i in load_map(mas_map_26[::]):
             self.gran.append(eval(i))
-        self.items = ["key(self.all_sprites, (w * 20, h * 20, w, h))"]
 
 
 class map_1(play):
@@ -286,7 +312,9 @@ class map_1(play):
                      (w * 11, h * 24, w * 7, h * 7),  # квадрат левый нижний
                      (w * 21, h * 24, w * 7, h * 7),  # квадрат правый нижний
                      ]
-        if not open_1:
+
+    def open_castle(self, w, h):
+        if 'key_1' not in self.player.items:
             self.gran.append((w * 11, h * 9, w * 17, h * 15))  # прямоугольник посередине
 
 
@@ -327,8 +355,7 @@ class map_4(play):
         w, h = w_n // 40, h_n // 40
         self.trigger = {Trigger((w * 38, 0, w * 2, h_n)): [map_2, "(w * 3, h * 19, w, h * 2)"],
                         Trigger((w * 15, 0, w * 10, h * 2)): [map_5, "(w * 37, h * 19, w, h * 2)"],
-                        Trigger((w * 0, 2, w * 1, h * 25)): [map_4, "(w * 10, h * 20, w, h * 2)"]
-                        }
+                        Trigger((w * 0, 2, w * 1, h * 25)): [map_4, "(w * 10, h * 20, w, h * 2)"]}
         self.c_main = (184, 182, 184)  # цвет_основной
         self.c_sec = (138, 170, 84)  # цвет_второй
         self.gran = [(0, 0, w * 15, h * 2),  # верхняя левая
@@ -362,18 +389,6 @@ class map_6(play):
             self.gran.append(eval(i))
 
 
-class map_7(play):
-    def init(self):
-        w_n, h_n = pygame.display.get_surface().get_size()
-        w, h = w_n // 40, h_n // 40
-        self.trigger = {Trigger((w * 15, h * 38, w * 9, h * 1)): [map_6, "(w * 15, h * 5, w, h * 2)"],
-                        Trigger((w * 15, h * 1, w * 10, h * 1)): [map_8, "(w * 20, h * 33, w, h * 2)"]}
-        self.c_main = (184, 182, 184)
-        self.c_sec = (18, 10, 143)
-        self.gran = []
-        for i in load_map(mas_map_7[::]):
-            self.gran.append(eval(i))
-
 class map_8(play):  # черный замок
     def init(self):
         w_n, h_n = pygame.display.get_surface().get_size()
@@ -403,8 +418,10 @@ class map_8(play):  # черный замок
                      (w * 21, h * 24, w * 7, h * 7),  # квадрат правый нижний
                      ]
 
-        if not open_1:
+    def open_castle(self, w, h):
+        if 'key_8' not in self.player.items:
             self.gran.append((w * 11, h * 9, w * 17, h * 15))  # прямоугольник посередине
+
 
 class map_9(play):
     def init(self):
@@ -417,8 +434,6 @@ class map_9(play):
         self.gran = []
         for i in load_map(mas_map_26[::]):
             self.gran.append(eval(i))
-
-
 
 
 class map_16(play):
@@ -627,7 +642,8 @@ class map_23(play):  # белый замок
                      (w * 22, h * 24, w * 7, h * 7),  # квадрат правый нижний
                      ]
 
-        if not open_23:
+    def open_castle(self, w, h):
+        if 'key_23' not in self.player.items:
             self.gran.append((w * 11, h * 9, w * 17, h * 15))  # прямоугольник посередине
 
 
@@ -694,8 +710,7 @@ class map_28(play):
     def init(self):
         w_n, h_n = pygame.display.get_surface().get_size()
         w, h = w_n // 40, h_n // 40
-        self.trigger = {
-            Trigger((w * 15, h * 2, w * 8, h * 2)): [map_27, "(w * 17, h * 33, w, h * 2)"]}
+        self.trigger = {Trigger((w * 15, h * 2, w * 8, h * 2)): [map_27, "(w * 17, h * 33, w, h * 2)"]}
         self.c_main = (184, 182, 184)
         self.c_sec = (255, 43, 43)
         self.gran = []
@@ -703,7 +718,7 @@ class map_28(play):
             self.gran.append(eval(i))
 
 
-items_onmap = {map_zero: ["key(self.all_sprites, (0, 0, w, h))"]}
+items_onmap = {map_1: {"key_1": "key(self.all_sprites, (w * 10, h * 20, w, h), pygame.Color(239, 223, 37))"}}
 
 
 start(screen)
