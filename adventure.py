@@ -51,10 +51,10 @@ class Trigger:
         self.rect = rect
 
 
-class key(pygame.sprite.Sprite):
-    def __init__(self, grp, rct, clr=None):
+class Item(pygame.sprite.Sprite):
+    def __init__(self, file, grp, rct, clr=None):
         super().__init__(grp)
-        self.image = load_image("key.png")
+        self.image = load_image(file)
         self.image = pygame.transform.rotozoom(self.image, 0, ((rct[2] / self.image.get_width()) + (rct[3] / self.image.get_height()) / 2))
         self.rect = self.image.get_rect()
         self.rect.x, self.rect.y = rct[0], rct[1]
@@ -221,7 +221,6 @@ class play:
                     self.items_spr.pop(name)
                     self.all_sprites.remove(item)
                     items_onmap[self.__class__].pop(name)
-            print(self.player.items)
 
             if WINDOWRESIZED in eventnow:  # перерисовка при изменении размеров окна
                 running = False
@@ -338,15 +337,13 @@ class map_3(play):
         w_n, h_n = pygame.display.get_surface().get_size()
         w, h = w_n // 40, h_n // 40
         self.trigger = {Trigger((0, 0, w * 2, h_n)): [map_2, "(w * 37, h * 19, w, h * 2)"],
-                        Trigger((w * 15, h * 38, w * 10, h * 2)): [map_16,
-                                                                   "(w * 18, h * 6, w, h * 2)"],
-                        Trigger((w * 38, h * 2, w * 2, h * 35)): [map_3, "(w * 33, h * 24, w, h * 2)"]}
+                        Trigger((w * 15, h * 38, w * 10, h * 2)): [map_16, "(w * 18, h * 6, w, h * 2)"],}
         self.c_main = (184, 182, 184)  # цвет_основной
         self.c_sec = (171, 176, 60)  # цвет_второй
         self.gran = [(0, h * 38, w * 15, h * 2),  # нижняя левая
                      (0, 0, w_n, h * 2),  # верхняя
                      (w * 25, h * 38, w * 15, h * 2),  # нижняя правая
-                     ]
+                     (w * 38, 0, w * 2, h_n)]
 
 
 class map_4(play):
@@ -354,14 +351,13 @@ class map_4(play):
         w_n, h_n = pygame.display.get_surface().get_size()
         w, h = w_n // 40, h_n // 40
         self.trigger = {Trigger((w * 38, 0, w * 2, h_n)): [map_2, "(w * 3, h * 19, w, h * 2)"],
-                        Trigger((w * 15, 0, w * 10, h * 2)): [map_5, "(w * 37, h * 19, w, h * 2)"],
-                        Trigger((w * 0, 2, w * 1, h * 25)): [map_4, "(w * 10, h * 20, w, h * 2)"]}
+                        Trigger((w * 15, 0, w * 10, h * 2)): [map_5, "(w * 37, h * 19, w, h * 2)"]}
         self.c_main = (184, 182, 184)  # цвет_основной
         self.c_sec = (138, 170, 84)  # цвет_второй
         self.gran = [(0, 0, w * 15, h * 2),  # верхняя левая
                      (0, h * 38, w_n, h * 4),  # нижняя
                      (w * 25, 0, w * 15, h * 2),  # правая верхняя
-                     ]
+                     (0, 0, w * 2, h_n)]
 
 class map_5(play):
     def init(self):
@@ -389,13 +385,26 @@ class map_6(play):
             self.gran.append(eval(i))
 
 
+class map_7(play):
+    def init(self):
+        w_n, h_n = pygame.display.get_surface().get_size()
+        w, h = w_n // 40, h_n // 40
+        self.trigger = {Trigger((w * 15, h * 38, w * 9, h * 1)): [map_6, "(w * 15, h * 5, w, h * 2)"],
+                        Trigger((w * 15, h * 1, w * 10, h * 1)): [map_8, "(w * 20, h * 33, w, h * 2)"]}
+        self.c_main = (184, 182, 184)
+        self.c_sec = (18, 10, 143)
+        self.gran = []
+        for i in load_map(mas_map_7[::]):
+            self.gran.append(eval(i))
+
+
 class map_8(play):  # черный замок
     def init(self):
         w_n, h_n = pygame.display.get_surface().get_size()
         w, h = w_n // 40, h_n // 40
         self.trigger = {
             Trigger((w * 16, h * 38, w * 9, h * 2)): [map_7, "(w * 22, h * 5, w, h * 2)"],
-            Trigger((w * 16, h * 24, w * 6, h * 2)): [map_9, "(w * 20, h * 33, w, h * 2)"]}
+            Trigger((w * 16, h * 0, w * 8, h * 2)): [map_9, "(w * 19, h * 32, w, h * 2)"]}
         self.c_main = (184, 182, 184)
         self.c_sec = (0, 1, 1)
         self.gran = [(0, 0, w * 2, h * 40),  # левая полоса
@@ -473,7 +482,7 @@ class map_17(play):
             Trigger((w * 1, h * 23, w * 1, h * 15)): [map_16, "(w * 34, h * 23, w, h * 2)"],
             Trigger((w * 39, h * 23, w * 1, h * 15)): [map_16, "(w * 4, h * 25, w, h * 2)"],
             Trigger((w * 39, h * 23, w * 1, h * 15)): [map_16, "(w * 4, h * 25, w, h * 2)"],
-            Trigger((w * 2, h * 37, w * 4, h * 2)): [map_18, "(w * 2, h * 4, w, h * 2)"],
+            Trigger((w * 2, h * 39, w * 4, h * 1)): [map_18, "(w * 2, h * 4, w, h * 2)"],
             # положение F
             Trigger((w * 34, h * 38, w * 4, h * 2)): [map_18, "(w * 36, h * 4, w, h * 2)"],
             # положение C
@@ -557,7 +566,7 @@ class map_20(play):
             Trigger((w * 0, h * 8, w * 1, h * 15)): [map_19, "(w * 35, h * 17, w, h * 2)"],
             Trigger((w * 38, h * 8, w * 1, h * 15)): [map_19, "(w * 7, h * 17, w, h * 2)"],
             Trigger((w * 38, h * 2, w * 1, h * 4)): [map_19, "(w * 5, h * 3, w, h * 2)"],
-            Trigger((w * 19, h * 18, w * 3, h * 1)): [map_20, "(w * 24, h * 3, w, h * 2)"], # телепортация за стену
+            Trigger((w * 19, h * 18, w * 3, h * 1)): [map_20, "(w * 24, h * 3, w, h * 2)"]  # телепортация за стену
             }
         self.c_main = (184, 182, 184)
         self.c_sec = (248, 10, 0)
@@ -579,7 +588,7 @@ class map_21(play):
             Trigger((w * 35, h * 2, w * 3, h * 2)): [map_19, "(w * 36, h * 35, w, h * 2)"],
             Trigger((w * 38, h * 22, w * 2, h * 9)): [map_22, "(w * 5, h * 25, w, h * 2)"],
             Trigger((w * 38, h * 32, w * 2, h * 6)): [map_22, "(w * 5, h * 35, w, h * 2)"],
-            Trigger((w * 19, h * 15, w * 4, h * 2)): [map_21, "(w * 19, h * 25, w, h * 2)"], # телепортация за стену
+            Trigger((w * 19, h * 15, w * 4, h * 2)): [map_21, "(w * 19, h * 25, w, h * 2)"],  # телепортация за стену
             Trigger((w * 3, h * 22, w * 1, h * 9)): [map_22, "(w * 35, h * 25, w, h * 2)"],
             Trigger((w * 3, h * 32, w * 1, h * 8)): [map_22, "(w * 35, h * 35, w, h * 2)"],
             Trigger((w * 15, h * 38, w * 10, h * 2)): [map_21, "(w * 20, h * 26, w, h * 2)"]
@@ -656,7 +665,7 @@ class map_24(play):
             Trigger((w * 40, h * 2, w * 2, h * 36)): [map_18, "(w * 5, h * 24, w, h * 2)"],
             Trigger((w * 15, h * 38, w * 8, h * 2)): [map_25, "(w * 16, h * 5, w, h * 2)"],
             Trigger((w * 15, h * 3, w * 10, h * 2)): [map_23, "(w * 20, h * 33, w, h * 2)"],
-            Trigger((w * 0, h * 2, w * 2, h * 36)): [map_24, "(w * 20, h * 20, w, h * 2)"], }
+            Trigger((w * 0, h * 2, w * 2, h * 36)): [map_24, "(w * 20, h * 20, w, h * 2)"]}
         self.c_main = (184, 182, 184)
         self.c_sec = (107, 142, 35)
         self.gran = []
@@ -718,7 +727,9 @@ class map_28(play):
             self.gran.append(eval(i))
 
 
-items_onmap = {map_1: {"key_1": "key(self.all_sprites, (w * 10, h * 20, w, h), pygame.Color(239, 223, 37))"}}
+items_onmap = {map_17: {"key_1": "Item('key.png', self.all_sprites, (w * 8, h * 20, w, h), pygame.Color(239, 223, 37))"},  # для желтого замка
+               map_6: {"key_23": "Item('key.png', self.all_sprites, (w * 32, h * 20, w, h), pygame.Color(255, 255, 255))"},  # для белого замка
+               map_21: {"key_8": "Item('key.png', self.all_sprites, (w * 8, h * 20, w, h), pygame.Color(0, 0, 0))"}}  # для черного замка
 
 
 start(screen)
