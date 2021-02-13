@@ -40,6 +40,10 @@ fps = 120
 clock = pygame.time.Clock()
 
 pygame.init()
+
+sound_died = pygame.mixer.Sound(os.path.join('data', 'smert.mp3'))  # звук смерти
+sound_take = pygame.mixer.Sound(os.path.join('data', 'take.mp3'))  # звук взятия предмета
+
 # screen = pygame.display.set_mode((100, 100), pygame.RESIZABLE)
 # screen = pygame.display.set_mode((0, 0), pygame.FULLSCREEN)
 screen = pygame.display.set_mode((1900, 1000), pygame.RESIZABLE)
@@ -80,25 +84,24 @@ class Dragon(pygame.sprite.Sprite):
     def __init__(self, grp, rct, clr=None):
         super().__init__(grp)
         self.image = load_image("dragon.png")
-        self.image = pygame.transform.rotozoom(self.image, 0, (
-                    (rct[2] / self.image.get_width()) + (rct[3] / self.image.get_height()) / 2))
+        self.image = pygame.transform.rotozoom(self.image, 0, ((rct[2] / self.image.get_width()) + (rct[3] / self.image.get_height()) / 2))
         self.rect = self.image.get_rect()
         self.rect.x, self.rect.y = rct[0], rct[1]
         if clr:
             set_color_for_img(self.image, clr)
 
-    def update(self, player_x, player_y):
+    def update(self, player_x, player_y, step_player):
         x = 0
         y = 0
         if player_x > self.rect.x:
-            x = 1
+            x = step_player // 5
         elif player_x < self.rect.x:
-            x = -1
+            x = -(step_player // 5)
 
         if player_y > self.rect.y:
-            y = 1
+            y = step_player // 5
         elif player_y < self.rect.y:
-            y = -1
+            y = -(step_player // 5)
 
         self.rect = self.rect.move(x, y)
 
@@ -106,6 +109,7 @@ class Dragon(pygame.sprite.Sprite):
 class Player(pygame.sprite.Sprite):
     def __init__(self, grp, rct, clr):
         super().__init__(grp)
+        self.step = 10
         self.color = clr
         self.image = pygame.Surface((rct[2], rct[3]))
         self.image.fill(self.color)
@@ -114,10 +118,9 @@ class Player(pygame.sprite.Sprite):
         self.items = []
 
     def update(self, mm1, mm2, borders):
-        self.rect = self.rect.move(mm1, mm2)
-        if any([pygame.sprite.collide_rect(self, i) for i in
-                borders]):  # если пересекается потом граница
-            self.rect = self.rect.move(-mm1, -mm2)
+        self.rect = self.rect.move(mm1 * self.step, mm2 * self.step)
+        if any([pygame.sprite.collide_rect(self, i) for i in borders]):  # если пересекается потом граница
+            self.rect = self.rect.move(-mm1 * self.step, -mm2 * self.step)
 
     def set_color(self, clr):
         self.color = clr
@@ -176,6 +179,95 @@ class start:
                     pygame.display.flip()
 
 
+class gameover:
+    def __init__(self, screen):
+        self.screen = screen
+        self.st()
+        self.run()
+
+    def st(self):
+        w, h = pygame.display.get_surface().get_size()
+        screen.fill((161, 71, 221))
+        pygame.draw.rect(self.screen, (184, 182, 184),
+                         ((w // 20), (h // 20), ((w // 20) * 18), ((h // 20) * 18)))
+        pygame.draw.rect(self.screen, (184, 182, 184),
+                         (((w // 20) * 8), ((h // 20) * 18), ((w // 20) * 4), ((h // 20) * 3)))
+
+        font = pygame.font.Font(None, 100)
+        t_cont = font.render("GAME OVER", True, (66, 187, 79))
+        self.screen.blit(t_cont,
+                         (w // 2 - t_cont.get_width() // 2, h // 2 - t_cont.get_height() // 2))
+        t_esc = font.render("Для выхода нажмите ESC", True, (66, 187, 79))
+        self.screen.blit(t_esc,
+                         (w // 2 - t_cont.get_width(), h // 2 + t_esc.get_height() // 2))
+        pygame.display.flip()
+
+    def run(self):
+        running = True
+        while running:
+            for event in pygame.event.get():
+                if event.type == QUIT:
+                    running = False
+
+                if event.type == KEYDOWN:
+                    kk = pygame.key.get_pressed()
+                    if kk[K_ESCAPE]:
+                        running = False
+                else:
+                    self.st()
+                    pygame.display.flip()
+
+
+class inventory:
+    def __init__(self, screen, items):
+        self.screen = screen
+        self.items = items
+        self.item_photo = {"key_1": ["key.png", pygame.Color(239, 223, 37)],
+                           "key_8": ["key.png", pygame.Color(0, 0, 0)],
+                           "key_23": ["key.png", pygame.Color(255, 255, 255)],
+                           "wall_5": ["cheat_wall.png", pygame.Color(18, 10, 143)],
+                           "wall_20": ["cheat_wall.png", pygame.Color(18, 10, 143)]}
+        self.st()
+        self.run()
+
+    def st(self):
+        w_n, h_n = pygame.display.get_surface().get_size()
+        w, h = w_n // 40, h_n // 40
+        screen.fill((184, 182, 184))
+        w_size = w * 3
+        h_size = h * 3
+
+        w_step = 10
+        h_step = 10
+        h_max = 0
+        for it in self.items:
+            image = set_color_for_img(load_image(self.item_photo[it][0]), self.item_photo[it][1])
+            image = pygame.transform.rotozoom(image, 0, ((w_size / image.get_width()) + (h_size / image.get_height()) / 2))
+            if w_step + image.get_width() > w_n:
+                w_step = 10
+                screen.blit(image, (w_step, h_max + h_step))
+                h_step += h_max + 10
+                h_max = 0
+            else:
+                screen.blit(image, (w_step, h_step))
+            w_step += image.get_width() + 10
+            h_max = max(h_max, image.get_height())
+        pygame.display.flip()
+
+    def run(self):
+        running = True
+        while running:
+            for event in pygame.event.get():
+                if event.type == QUIT:
+                    running = False
+
+                if event.type == KEYDOWN:
+                    running = False
+                else:
+                    self.st()
+                    pygame.display.flip()
+
+
 class play:  # класс для карт (от него наследуются карты)
     def __init__(self, screen, spawn, pl=None):
         print(self.__class__)
@@ -183,7 +275,6 @@ class play:  # класс для карт (от него наследуются 
         self.items_spr = {}  # объекты предметов (ключей) в виде {кодовое_имя: спрайт}
         self.spawn = spawn
         self.screen = screen
-        self.step = 10  # кол-во шагов за один раз
         self.init()
         self.initSU()
         self.run()
@@ -214,6 +305,13 @@ class play:  # класс для карт (от него наследуются 
                     walk_s = True
                 if K_d in eventnow[KEYDOWN]:  # вправо
                     walk_d = True
+                if K_e in eventnow[KEYDOWN]:
+                    inventory(screen, self.player.items)
+                    walk_w = False
+                    walk_a = False
+                    walk_s = False
+                    walk_d = False
+                    self.initSU()
                 if K_ESCAPE in eventnow[KEYDOWN]:  # завершение работы при ESC
                     running = False
                     break
@@ -230,13 +328,20 @@ class play:  # класс для карт (от него наследуются 
 
             # ходьба
             if walk_w:
-                self.player.update(0, -self.step, self.borders)
+                self.player.update(0, -1, self.borders)
             if walk_a:
-                self.player.update(-self.step, 0, self.borders)
+                self.player.update(-1, 0, self.borders)
             if walk_s:  # вниз
-                self.player.update(0, self.step, self.borders)
+                self.player.update(0, 1, self.borders)
             if walk_d:  # вправо
-                self.player.update(self.step, 0, self.borders)
+                self.player.update(1, 0, self.borders)
+
+            if "dragon" in self.__dir__():  # движение дракона
+                self.dragon.update(self.player.rect[0], self.player.rect[1], self.player.step)
+                if pygame.sprite.collide_rect(self.player, self.dragon):
+                    sound_died.play()
+                    gameover(screen)
+                    running = False
 
             for tg in self.trigger.keys():  # не пришел ли пользователь в триггер
                 if pygame.sprite.collide_rect(self.player, tg):
@@ -252,6 +357,7 @@ class play:  # класс для карт (от него наследуются 
                     self.items_spr.pop(name)
                     self.all_sprites.remove(item)
                     items_onmap[self.__class__].pop(name)
+                    sound_take.play()
 
             if WINDOWRESIZED in eventnow:  # перерисовка при изменении размеров окна
                 running = False
@@ -473,7 +579,7 @@ class map_9(play):
         w_n, h_n = pygame.display.get_surface().get_size()
         w, h = w_n // 40, h_n // 40
         self.trigger = {
-            Trigger((w * 15, h * 38, w * 8, h * 2)): [map_8, "(w * 20, h * 34, w, h * 2)"]}
+            Trigger((w * 15, h * 38, w * 10, h * 2)): [map_8, "(w * 20, h * 34, w, h * 2)"]}
         self.c_main = (184, 182, 184)
         self.c_sec = (0, 0, 0)
         self.gran = []
@@ -617,6 +723,7 @@ class map_20(play):
             for i in load_map(mas_map_20_open[::]):
                 self.gran.append(eval(i))
 
+
 class map_21(play):
     def init(self):
         w_n, h_n = pygame.display.get_surface().get_size()
@@ -630,11 +737,10 @@ class map_21(play):
             Trigger((w * 35, h * 2, w * 3, h * 2)): [map_19, "(w * 36, h * 35, w, h * 2)"],
             Trigger((w * 38, h * 22, w * 2, h * 9)): [map_22, "(w * 5, h * 25, w, h * 2)"],
             Trigger((w * 38, h * 32, w * 2, h * 6)): [map_22, "(w * 5, h * 35, w, h * 2)"],
-            Trigger((w * 19, h * 15, w * 4, h * 2)): [map_21, "(w * 19, h * 25, w, h * 2)"],  # телепортация за стену
             Trigger((w * 3, h * 22, w * 1, h * 9)): [map_22, "(w * 35, h * 25, w, h * 2)"],
             Trigger((w * 3, h * 32, w * 1, h * 8)): [map_22, "(w * 35, h * 35, w, h * 2)"],
-            Trigger((w * 15, h * 38, w * 10, h * 2)): [map_21, "(w * 20, h * 26, w, h * 2)"]
-        }
+            Trigger((w * 15, h * 38, w * 10, h * 2)): [map_21, "(w * 20, h * 26, w, h * 2)"],
+            Trigger((w * 15, h * 38, w * 8, h * 2)): [map_23, "(w * 19, h * 31, w, h * 2)"]}
         self.c_main = (184, 182, 184)
         self.c_sec = (248, 10, 0)
         self.gran = []
@@ -647,7 +753,7 @@ class map_22(play):
         w_n, h_n = pygame.display.get_surface().get_size()
         w, h = w_n // 40, h_n // 40
         self.trigger = {
-            Trigger((w * 15, h * 38, w * 8, h * 2)): [map_23, "(w * 19, h * 31, w, h * 2)"],
+            Trigger((w * 15, h * 38, w * 10, h * 2)): [map_23, "(w * 19, h * 31, w, h * 2)"],
             Trigger((w * 18, h * 2, w * 4, h * 2)): [map_20, "(w * 20, h * 33, w, h * 2)"],
             Trigger((w * 13, h * 2, w * 4, h * 2)): [map_20, "(w * 13, h * 33, w, h * 2)"],
             Trigger((w * 24, h * 2, w * 4, h * 2)): [map_20, "(w * 24, h * 33, w, h * 2)"],
@@ -669,7 +775,7 @@ class map_23(play):  # белый замок
     def init(self):
         w_n, h_n = pygame.display.get_surface().get_size()
         w, h = w_n // 40, h_n // 40
-        self.trigger = {Trigger((w * 16, h * 38, w * 9, h * 1)): [map_24, "(w * 16, h * 5, w, h * 2)"],
+        self.trigger = {Trigger((w * 16, h * 38, w * 9, h * 1)): [map_24, "(w * 16, h * 4, w, h * 2)"],
                         Trigger((w * 16, h * 0, w * 8, h * 2)): [map_22, "(w * 19, h * 32, w, h * 2)"]}
         self.c_main = (184, 182, 184)
         self.c_sec = (255, 255, 255)
@@ -706,7 +812,7 @@ class map_24(play):
             Trigger((w * 40, h * 2, w * 2, h * 36)): [map_18, "(w * 5, h * 24, w, h * 2)"],
             Trigger((w * 40, h * 2, w * 2, h * 36)): [map_18, "(w * 5, h * 24, w, h * 2)"],
             Trigger((w * 15, h * 38, w * 8, h * 2)): [map_25, "(w * 16, h * 5, w, h * 2)"],
-            Trigger((w * 15, h * 3, w * 10, h * 2)): [map_23, "(w * 20, h * 33, w, h * 2)"],
+            Trigger((w * 15, h * 0, w * 10, h * 2)): [map_23, "(w * 20, h * 33, w, h * 2)"],
             Trigger((w * 0, h * 2, w * 2, h * 36)): [map_24, "(w * 20, h * 20, w, h * 2)"]}
         self.c_main = (184, 182, 184)
         self.c_sec = (107, 142, 35)
@@ -714,13 +820,17 @@ class map_24(play):
         for i in load_map(mas_map_24[::]):
             self.gran.append(eval(i))
 
+    def open_castle(self, w, h):  # запуск дракона
+        self.dragon = Dragon(self.all_sprites, (w * 4, h * 15, w * 2, h * 2))
+        self.all_sprites.add(self.dragon)
+
 
 class map_25(play):
     def init(self):
         w_n, h_n = pygame.display.get_surface().get_size()
         w, h = w_n // 40, h_n // 40
         self.trigger = {
-            Trigger((w * 15, h * 2, w * 8, h * 2)): [map_24, "(w * 17, h * 33, w, h * 2)"]}
+            Trigger((w * 15, h * 0, w * 10, h * 2)): [map_24, "(w * 17, h * 35, w, h * 2)"]}
         self.c_main = (184, 182, 184)
         self.c_sec = (107, 142, 35)
         self.gran = []
@@ -740,6 +850,10 @@ class map_26(play):
         for i in load_map(mas_map_26[::]):
             self.gran.append(eval(i))
 
+    def open_castle(self, w, h):  # запуск дракона
+        self.dragon = Dragon(self.all_sprites, (w * 4, h * 15, w * 2, h * 2))
+        self.all_sprites.add(self.dragon)
+
 
 class map_27(play):
     def init(self):
@@ -747,13 +861,12 @@ class map_27(play):
         w, h = w_n // 40, h_n // 40
         self.trigger = {
             Trigger((w * 0, h * 3, w * 1, h * 36)): [map_18, "(w * 36, h * 23, w, h * 2)"],
-            Trigger((w * 15, h * 38, w * 8, h * 2)): [map_28, "(w * 16, h * 5, w, h * 2)"],
-            Trigger((w * 15, h * 2, w * 8, h * 2)): [map_26, "(w * 16, h * 33, w, h * 2)"],
-            Trigger((w * 40, h * 2, w * 2, h * 36)): [map_27, "(w * 20, h * 20, w, h * 2)"]}
+            Trigger((w * 15, h * 38, w * 10, h * 2)): [map_28, "(w * 16, h * 5, w, h * 2)"],
+            Trigger((w * 15, h * 2, w * 10, h * 2)): [map_26, "(w * 16, h * 33, w, h * 2)"]}
         self.c_main = (184, 182, 184)
         self.c_sec = (0, 191, 255)
         self.gran = []
-        for i in load_map(mas_map_24[::]):
+        for i in load_map(mas_map_27[::]):
             self.gran.append(eval(i))
 
 
@@ -761,7 +874,7 @@ class map_28(play):
     def init(self):
         w_n, h_n = pygame.display.get_surface().get_size()
         w, h = w_n // 40, h_n // 40
-        self.trigger = {Trigger((w * 15, h * 2, w * 8, h * 2)): [map_27, "(w * 17, h * 33, w, h * 2)"]}
+        self.trigger = {Trigger((w * 15, h * 2, w * 10, h * 2)): [map_27, "(w * 17, h * 33, w, h * 2)"]}
         self.c_main = (184, 182, 184)
         self.c_sec = (255, 43, 43)
         self.gran = []
@@ -770,7 +883,7 @@ class map_28(play):
 
 
 items_onmap = {map_17: {"key_1": "Item('key.png', self.all_sprites, (w * 7, h * 20, w * 2, h), pygame.Color(239, 223, 37))"},  # для желтого замка
-               map_6: {"key_23": "Item('key.png', self.all_sprites, (w * 32, h * 20, w * 2, h), pygame.Color(255, 255, 255))"},  # для белого замка
+               map_6: {"key_23": "Item('key.png', self.all_sprites, (w * 33, h * 20, w * 2, h), pygame.Color(255, 255, 255))"},  # для белого замка
                map_21: {"key_8": "Item('key.png', self.all_sprites, (w * 8, h * 20, w * 2, h), pygame.Color(0, 0, 0))"},  # для черного замка
                map_26: {"wall_20": "Item('cheat_wall.png', self.all_sprites, (w * 18, h * 18, w * 2, h * 2), pygame.Color(248, 10, 0))"},
                map_28: {"wall_5": "Item('cheat_wall.png', self.all_sprites, (w * 18, h * 18, w * 2, h * 2), pygame.Color(18, 10, 143))"}}
