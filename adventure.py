@@ -19,16 +19,8 @@ def load_image(name, colorkey=None):
         print(f"Файл с изображением '{fullname}' не найден")
         raise SystemExit
     image = pygame.image.load(fullname)
-
-    if colorkey is not None:
-        image = image.convert()
-        if colorkey == -1:
-            colorkey = image.get_at((0, 0))
-        image.set_colorkey(colorkey)
-    else:
-        image = image.convert_alpha()
+    image = image.convert_alpha()
     return image
-
 
 
 def set_color_for_img(img, color):
@@ -43,7 +35,8 @@ walk_w = False
 walk_a = False
 walk_s = False
 walk_d = False
-fps = 300
+
+fps = 120
 clock = pygame.time.Clock()
 
 pygame.init()
@@ -55,16 +48,16 @@ pygame.display.set_caption('Adventure')
 
 class Trigger:
     def __init__(self, rect):
-        print(rect)
         self.rect = rect
 
 
-
 class Item(pygame.sprite.Sprite):
-    def __init__(self, file, grp, rct, clr=None):
+    def __init__(self, file, grp, rct, clr=None, key=None):
         super().__init__(grp)
+        print(key)
         self.image = load_image(file)
         self.image = pygame.transform.rotozoom(self.image, 0, ((rct[2] / self.image.get_width()) + (rct[3] / self.image.get_height()) / 2))
+        self.image.set_colorkey(key)
         self.rect = self.image.get_rect()
         self.rect.x, self.rect.y = rct[0], rct[1]
         if clr:
@@ -72,6 +65,15 @@ class Item(pygame.sprite.Sprite):
 
     def set_color(self, clr):
         set_color_for_img(self.image, clr)
+
+
+class GR(pygame.sprite.Sprite):
+    def __init__(self, grp, rct, clr):
+        super().__init__(grp)
+        self.image = pygame.Surface((rct[2], rct[3]))
+        self.image.fill(clr)
+        self.rect = self.image.get_rect()
+        self.rect.x, self.rect.y = rct[0], rct[1]
 
 
 class Dragon(pygame.sprite.Sprite):
@@ -99,15 +101,6 @@ class Dragon(pygame.sprite.Sprite):
             y = -1
 
         self.rect = self.rect.move(x, y)
-
-
-class GR(pygame.sprite.Sprite):
-    def __init__(self, grp, rct, clr):
-        super().__init__(grp)
-        self.image = pygame.Surface((rct[2], rct[3]))
-        self.image.fill(clr)
-        self.rect = self.image.get_rect()
-        self.rect.x, self.rect.y = rct[0], rct[1]
 
 
 class Player(pygame.sprite.Sprite):
@@ -183,19 +176,19 @@ class start:
                     pygame.display.flip()
 
 
-class play:
+class play:  # класс для карт (от него наследуются карты)
     def __init__(self, screen, spawn, pl=None):
         print(self.__class__)
-        self.pl = pl
-        self.items_spr = {}
+        self.pl = pl  # объект player, который может быть передан на карту
+        self.items_spr = {}  # объекты предметов (ключей) в виде {кодовое_имя: спрайт}
         self.spawn = spawn
         self.screen = screen
-        self.step = 2  # кол-во шагов за один раз
+        self.step = 10  # кол-во шагов за один раз
         self.init()
         self.initSU()
         self.run()
 
-    def run(self):
+    def run(self):  # главный цикл
         running = True
         global walk_w, walk_a, walk_s, walk_d
         while running:
@@ -235,6 +228,7 @@ class play:
                 if K_d in eventnow[KEYUP]:  # вправо
                     walk_d = False
 
+            # ходьба
             if walk_w:
                 self.player.update(0, -self.step, self.borders)
             if walk_a:
@@ -243,22 +237,21 @@ class play:
                 self.player.update(0, self.step, self.borders)
             if walk_d:  # вправо
                 self.player.update(self.step, 0, self.borders)
-            if "dragon" in self.__dir__():
-                self.dragon.update(self.player.rect[0], self.player.rect[1])
+
             for tg in self.trigger.keys():  # не пришел ли пользователь в триггер
                 if pygame.sprite.collide_rect(self.player, tg):
                     running = False
                     a = self.trigger[tg][0]
-                    a(self.screen, self.trigger[tg][1], self.player)
+                    a(self.screen, self.trigger[tg][1], self.player)  # перенос на следующую карту
                     break
-            items_spr_copy = self.items_spr.copy()
+
+            items_spr_copy = self.items_spr.copy()  # предметы подбираются и заносятся в "инвертарь"
             for name, item in items_spr_copy.items():  # подбор предметов
                 if pygame.sprite.collide_rect(self.player, item):
                     self.player.items.append(name)
                     self.items_spr.pop(name)
                     self.all_sprites.remove(item)
                     items_onmap[self.__class__].pop(name)
-            print(self.player.items)
 
             if WINDOWRESIZED in eventnow:  # перерисовка при изменении размеров окна
                 running = False
@@ -266,25 +259,25 @@ class play:
                 self.initSU()
                 self.run()
 
-        # отрисовка
-            if running:
+            if running:  # отрисовка
                 screen.fill(self.c_main)
                 self.all_sprites.draw(screen)
                 pygame.display.flip()
                 clock.tick(fps)
 
-    def initSU(self):
+    def initSU(self):  # вся инициализация
         w_n, h_n = pygame.display.get_surface().get_size()
         w, h = w_n // 40, h_n // 40
         screen.fill(self.c_main)  # залить основным цветом
         self.all_sprites = pygame.sprite.Group()  # все спрайты
         self.borders = pygame.sprite.Group()  # границы (прямоугольники)
+
         self.player = self.pl if self.pl else Player(self.all_sprites, eval(self.spawn), self.c_sec)  # игрок
         self.player.spawn(eval(self.spawn))  # спавним игрока
-        self.player.set_color(self.c_sec)
+        self.player.set_color(self.c_sec)  # устанавливаем цвет игроку
         self.all_sprites.add(self.player)
 
-        if "open_castle" in self.__dir__():
+        if "open_castle" in self.__dir__():  # открытие замка и запуск дракона
             self.open_castle(w, h)
 
         for rr in self.gran:
@@ -294,7 +287,7 @@ class play:
                 a = GR(self.all_sprites, rr, self.c_sec)  # цвет, заданный в классе карты
             self.borders.add(a)
 
-        if self.__class__ in items_onmap:
+        if self.__class__ in items_onmap:  # отрисовываем предметы (ключи)
             for name, it in items_onmap[self.__class__].items():
                 a = eval(it)
                 self.all_sprites.add(a)
@@ -308,12 +301,11 @@ class map_zero(play):
     def init(self):
         w_n, h_n = pygame.display.get_surface().get_size()
         w, h = w_n // 40, h_n // 40
-        self.trigger = {
-            Trigger((w * 15, h * 38, w * 10, h * 2)): [map_1, "(w * 19, h * 31, w, h * 2)"]}
-        self.c_main = (184, 182, 184)
-        self.c_sec = (239, 223, 37)
+        self.trigger = {Trigger((w * 15, h * 38, w * 10, h * 2)): [map_1, "(w * 19, h * 31, w, h * 2)"]}
+        self.c_main = (184, 182, 184)  # фоновый цвет
+        self.c_sec = (239, 223, 37)  # цвет всего остального
         self.gran = []
-        for i in load_map(mas_map_26[::]):
+        for i in load_map(mas_map_26[::]):  # загрузка карты
             self.gran.append(eval(i))
 
 
@@ -349,7 +341,7 @@ class map_1(play):
                      (w * 21, h * 24, w * 7, h * 7),  # квадрат правый нижний
                      ]
 
-    def open_castle(self, w, h):
+    def open_castle(self, w, h):  # открытие замка
         if 'key_1' not in self.player.items:
             self.gran.append((w * 11, h * 9, w * 17, h * 15))  # прямоугольник посередине
 
@@ -368,26 +360,19 @@ class map_2(play):
                      (w * 25, 0, w * 15, h * 2),  # правая верхняя
                      ]
 
-    def open_castle(self, w, h):
-        self.dragon = Dragon(self.all_sprites, (w * 20, h * 20, w * 2, h * 2))
-        self.all_sprites.add(self.dragon)
-
-
 
 class map_3(play):
     def init(self):
         w_n, h_n = pygame.display.get_surface().get_size()
         w, h = w_n // 40, h_n // 40
         self.trigger = {Trigger((0, 0, w * 2, h_n)): [map_2, "(w * 37, h * 19, w, h * 2)"],
-                        Trigger((w * 15, h * 38, w * 10, h * 2)): [map_16,
-                                                                   "(w * 18, h * 6, w, h * 2)"],
-                        Trigger((w * 38, h * 2, w * 2, h * 35)): [map_3, "(w * 33, h * 24, w, h * 2)"]}
+                        Trigger((w * 15, h * 38, w * 10, h * 2)): [map_16, "(w * 18, h * 6, w, h * 2)"],}
         self.c_main = (184, 182, 184)  # цвет_основной
         self.c_sec = (171, 176, 60)  # цвет_второй
         self.gran = [(0, h * 38, w * 15, h * 2),  # нижняя левая
                      (0, 0, w_n, h * 2),  # верхняя
                      (w * 25, h * 38, w * 15, h * 2),  # нижняя правая
-                     ]
+                     (w * 38, 0, w * 2, h_n)]
 
 
 class map_4(play):
@@ -395,14 +380,14 @@ class map_4(play):
         w_n, h_n = pygame.display.get_surface().get_size()
         w, h = w_n // 40, h_n // 40
         self.trigger = {Trigger((w * 38, 0, w * 2, h_n)): [map_2, "(w * 3, h * 19, w, h * 2)"],
-                        Trigger((w * 15, 0, w * 10, h * 2)): [map_5, "(w * 37, h * 19, w, h * 2)"],
-                        Trigger((w * 0, 2, w * 1, h * 25)): [map_4, "(w * 10, h * 20, w, h * 2)"]}
+                        Trigger((w * 15, 0, w * 10, h * 2)): [map_5, "(w * 37, h * 19, w, h * 2)"]}
         self.c_main = (184, 182, 184)  # цвет_основной
         self.c_sec = (138, 170, 84)  # цвет_второй
         self.gran = [(0, 0, w * 15, h * 2),  # верхняя левая
                      (0, h * 38, w_n, h * 4),  # нижняя
                      (w * 25, 0, w * 15, h * 2),  # правая верхняя
-                     ]
+                     (0, 0, w * 2, h_n)]
+
 
 class map_5(play):
     def init(self):
@@ -415,6 +400,12 @@ class map_5(play):
         self.gran = []
         for i in load_map(mas_map_5[::]):
             self.gran.append(eval(i))
+
+    def open_castle(self, w, h):
+        if "wall_5" in self.player.items:
+            self.gran = []
+            for i in load_map(mas_map_5_open[::]):
+                self.gran.append(eval(i))
 
 
 class map_6(play):
@@ -430,13 +421,26 @@ class map_6(play):
             self.gran.append(eval(i))
 
 
+class map_7(play):
+    def init(self):
+        w_n, h_n = pygame.display.get_surface().get_size()
+        w, h = w_n // 40, h_n // 40
+        self.trigger = {Trigger((w * 15, h * 38, w * 9, h * 1)): [map_6, "(w * 15, h * 5, w, h * 2)"],
+                        Trigger((w * 15, h * 1, w * 10, h * 1)): [map_8, "(w * 20, h * 33, w, h * 2)"]}
+        self.c_main = (184, 182, 184)
+        self.c_sec = (18, 10, 143)
+        self.gran = []
+        for i in load_map(mas_map_7[::]):
+            self.gran.append(eval(i))
+
+
 class map_8(play):  # черный замок
     def init(self):
         w_n, h_n = pygame.display.get_surface().get_size()
         w, h = w_n // 40, h_n // 40
         self.trigger = {
             Trigger((w * 16, h * 38, w * 9, h * 2)): [map_7, "(w * 22, h * 5, w, h * 2)"],
-            Trigger((w * 16, h * 24, w * 6, h * 2)): [map_9, "(w * 20, h * 33, w, h * 2)"]}
+            Trigger((w * 16, h * 0, w * 8, h * 2)): [map_9, "(w * 19, h * 32, w, h * 2)"]}
         self.c_main = (184, 182, 184)
         self.c_sec = (0, 1, 1)
         self.gran = [(0, 0, w * 2, h * 40),  # левая полоса
@@ -483,7 +487,7 @@ class map_16(play):
         w, h = w_n // 40, h_n // 40
         self.trigger = {
             Trigger((w * 9, h * 38, w * 3, h * 2)): [map_17, "(w * 8, h * 3, w, h * 2)"],
-            Trigger((w * 15, h * 2, w * 10, h * 2)): [map_3, "(w * 17, h * 36, w, h * 2)"],
+            Trigger((w * 15, 0, w * 10, h * 2)): [map_3, "(w * 17, h * 36, w, h * 2)"],
             Trigger((w * 14, h * 38, w * 3, h * 2)): [map_17, "(w * 14, h * 3, w, h * 2)"],
             Trigger((w * 22, h * 38, w * 3, h * 2)): [map_17, "(w * 22, h * 3, w, h * 2)"],
             Trigger((w * 28, h * 38, w * 3, h * 2)): [map_17, "(w * 28, h * 3, w, h * 2)"],
@@ -514,7 +518,7 @@ class map_17(play):
             Trigger((w * 1, h * 23, w * 1, h * 15)): [map_16, "(w * 34, h * 23, w, h * 2)"],
             Trigger((w * 39, h * 23, w * 1, h * 15)): [map_16, "(w * 4, h * 25, w, h * 2)"],
             Trigger((w * 39, h * 23, w * 1, h * 15)): [map_16, "(w * 4, h * 25, w, h * 2)"],
-            Trigger((w * 2, h * 37, w * 4, h * 2)): [map_18, "(w * 2, h * 4, w, h * 2)"],
+            Trigger((w * 2, h * 39, w * 4, h * 1)): [map_18, "(w * 2, h * 4, w, h * 2)"],
             # положение F
             Trigger((w * 34, h * 38, w * 4, h * 2)): [map_18, "(w * 36, h * 4, w, h * 2)"],
             # положение C
@@ -598,14 +602,20 @@ class map_20(play):
             Trigger((w * 0, h * 8, w * 1, h * 15)): [map_19, "(w * 35, h * 17, w, h * 2)"],
             Trigger((w * 38, h * 8, w * 1, h * 15)): [map_19, "(w * 7, h * 17, w, h * 2)"],
             Trigger((w * 38, h * 2, w * 1, h * 4)): [map_19, "(w * 5, h * 3, w, h * 2)"],
-            Trigger((w * 19, h * 18, w * 3, h * 1)): [map_20, "(w * 24, h * 3, w, h * 2)"], # телепортация за стену
+            Trigger((w * 19, h * 18, w * 3, h * 1)): [map_20, "(w * 24, h * 3, w, h * 2)"]  # телепортация за стену
             }
         self.c_main = (184, 182, 184)
         self.c_sec = (248, 10, 0)
         self.gran = []
+
         for i in load_map(mas_map_20[::]):
             self.gran.append(eval(i))
 
+    def open_castle(self, w, h):
+        if "wall_20" in self.player.items:
+            self.gran = []
+            for i in load_map(mas_map_20_open[::]):
+                self.gran.append(eval(i))
 
 class map_21(play):
     def init(self):
@@ -620,7 +630,7 @@ class map_21(play):
             Trigger((w * 35, h * 2, w * 3, h * 2)): [map_19, "(w * 36, h * 35, w, h * 2)"],
             Trigger((w * 38, h * 22, w * 2, h * 9)): [map_22, "(w * 5, h * 25, w, h * 2)"],
             Trigger((w * 38, h * 32, w * 2, h * 6)): [map_22, "(w * 5, h * 35, w, h * 2)"],
-            Trigger((w * 19, h * 15, w * 4, h * 2)): [map_21, "(w * 19, h * 25, w, h * 2)"], # телепортация за стену
+            Trigger((w * 19, h * 15, w * 4, h * 2)): [map_21, "(w * 19, h * 25, w, h * 2)"],  # телепортация за стену
             Trigger((w * 3, h * 22, w * 1, h * 9)): [map_22, "(w * 35, h * 25, w, h * 2)"],
             Trigger((w * 3, h * 32, w * 1, h * 8)): [map_22, "(w * 35, h * 35, w, h * 2)"],
             Trigger((w * 15, h * 38, w * 10, h * 2)): [map_21, "(w * 20, h * 26, w, h * 2)"]
@@ -697,7 +707,7 @@ class map_24(play):
             Trigger((w * 40, h * 2, w * 2, h * 36)): [map_18, "(w * 5, h * 24, w, h * 2)"],
             Trigger((w * 15, h * 38, w * 8, h * 2)): [map_25, "(w * 16, h * 5, w, h * 2)"],
             Trigger((w * 15, h * 3, w * 10, h * 2)): [map_23, "(w * 20, h * 33, w, h * 2)"],
-            Trigger((w * 0, h * 2, w * 2, h * 36)): [map_24, "(w * 20, h * 20, w, h * 2)"], }
+            Trigger((w * 0, h * 2, w * 2, h * 36)): [map_24, "(w * 20, h * 20, w, h * 2)"]}
         self.c_main = (184, 182, 184)
         self.c_sec = (107, 142, 35)
         self.gran = []
@@ -759,9 +769,11 @@ class map_28(play):
             self.gran.append(eval(i))
 
 
-items_onmap = {map_17: {"key_1": "Item('key.png', self.all_sprites, (w * 8, h * 20, w, h), pygame.Color(239, 223, 37))"},  # для желтого замка
-               map_6: {"key_23": "Item('key.png', self.all_sprites, (w * 32, h * 20, w, h), pygame.Color(255, 255, 255))"},  # для белого замка
-               map_21: {"key_8": "Item('key.png', self.all_sprites, (w * 8, h * 20, w, h), pygame.Color(0, 0, 0))"}}  # для черного замка
+items_onmap = {map_17: {"key_1": "Item('key.png', self.all_sprites, (w * 7, h * 20, w * 2, h), pygame.Color(239, 223, 37))"},  # для желтого замка
+               map_6: {"key_23": "Item('key.png', self.all_sprites, (w * 32, h * 20, w * 2, h), pygame.Color(255, 255, 255))"},  # для белого замка
+               map_21: {"key_8": "Item('key.png', self.all_sprites, (w * 8, h * 20, w * 2, h), pygame.Color(0, 0, 0))"},  # для черного замка
+               map_26: {"wall_20": "Item('cheat_wall.png', self.all_sprites, (w * 18, h * 18, w * 2, h * 2), pygame.Color(248, 10, 0))"},
+               map_28: {"wall_5": "Item('cheat_wall.png', self.all_sprites, (w * 18, h * 18, w * 2, h * 2), pygame.Color(18, 10, 143))"}}
 
 
 start(screen)
