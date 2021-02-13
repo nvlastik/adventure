@@ -40,6 +40,7 @@ fps = 120
 clock = pygame.time.Clock()
 
 pygame.init()
+pygame.mouse.set_visible(False)
 
 sound_died = pygame.mixer.Sound(os.path.join('data', 'smert.mp3'))  # звук смерти
 sound_take = pygame.mixer.Sound(os.path.join('data', 'take.mp3'))  # звук взятия предмета
@@ -708,7 +709,6 @@ class map_20(play):
             Trigger((w * 0, h * 8, w * 1, h * 15)): [map_19, "(w * 35, h * 17, w, h * 2)"],
             Trigger((w * 38, h * 8, w * 1, h * 15)): [map_19, "(w * 7, h * 17, w, h * 2)"],
             Trigger((w * 38, h * 2, w * 1, h * 4)): [map_19, "(w * 5, h * 3, w, h * 2)"],
-            Trigger((w * 19, h * 18, w * 3, h * 1)): [map_20, "(w * 24, h * 3, w, h * 2)"]  # телепортация за стену
             }
         self.c_main = (184, 182, 184)
         self.c_sec = (248, 10, 0)
@@ -884,6 +884,7 @@ class map_28(play):
 
 items_onmap = {map_17: {"key_1": "Item('key.png', self.all_sprites, (w * 7, h * 20, w * 2, h), pygame.Color(239, 223, 37))"},  # для желтого замка
                map_6: {"key_23": "Item('key.png', self.all_sprites, (w * 33, h * 20, w * 2, h), pygame.Color(255, 255, 255))"},  # для белого замка
+               map_20: {"cup": "Item('cup.png', self.all_sprites, (w * 30, h * 10, w * 2, h))"},  # кубок
                map_21: {"key_8": "Item('key.png', self.all_sprites, (w * 8, h * 20, w * 2, h), pygame.Color(0, 0, 0))"},  # для черного замка
                map_26: {"wall_20": "Item('cheat_wall.png', self.all_sprites, (w * 18, h * 18, w * 2, h * 2), pygame.Color(248, 10, 0))"},
                map_28: {"wall_5": "Item('cheat_wall.png', self.all_sprites, (w * 18, h * 18, w * 2, h * 2), pygame.Color(18, 10, 143))"}}
