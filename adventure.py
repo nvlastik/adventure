@@ -13,7 +13,26 @@ def load_map(map):
     return vsv
 
 
-def load_image(name, colorkey=None):
+class end:
+    def __init__(self, screen):
+        self.screen = screen
+        self.st()
+
+    def st(self):
+        w, h = pygame.display.get_surface().get_size()
+        screen.fill((24, 23, 28))
+        image_2 = load_image('dragon_2.png')
+        screen.blit(image_2, (w // 2 - image_2.get_width() // 2, h // 2 - image_2.get_height() // 2 + 50))
+        font = pygame.font.Font('data/19151.ttf', 60)
+        font_2 = pygame.font.Font('data/10923.otf', 200)
+        t_cont = font.render("Нажмите любую кнопку для продолжения", True, (41, 33, 49))
+        self.screen.blit(t_cont, (w // 2 - t_cont.get_width() // 2, h - 90))
+        t_esc = font_2.render("ИГРА ПРОЙДЕНА", True, (81, 58, 100))
+        self.screen.blit(t_esc, (w // 2 - t_esc.get_width() // 2, h - 900))
+        pygame.display.flip()
+
+
+def load_image(name):
     fullname = os.path.join('data', name)
     if not os.path.isfile(fullname):
         print(f"Файл с изображением '{fullname}' не найден")
@@ -143,19 +162,15 @@ class start:
 
     def st(self):
         w, h = pygame.display.get_surface().get_size()
-        screen.fill((161, 71, 221))
-        pygame.draw.rect(self.screen, (184, 182, 184),
-                         ((w // 20), (h // 20), ((w // 20) * 18), ((h // 20) * 18)))
-        pygame.draw.rect(self.screen, (184, 182, 184),
-                         (((w // 20) * 8), ((h // 20) * 18), ((w // 20) * 4), ((h // 20) * 3)))
-
-        font = pygame.font.Font(None, 72)
-        t_cont = font.render("Нажмите любую кнопку для начала", True, (66, 187, 79))
-        self.screen.blit(t_cont,
-                         (w // 2 - t_cont.get_width() // 2, h // 2 - t_cont.get_height() // 2))
-        t_esc = font.render("Для выхода нажмите ESC", True, (66, 187, 79))
-        self.screen.blit(t_esc,
-                         (w // 2 - t_cont.get_width() // 2, h // 2 + t_esc.get_height() // 2))
+        screen.fill((24, 23, 28))
+        image_2 = load_image('dragon_2.png')
+        screen.blit(image_2, (w // 2 - image_2.get_width() // 2, h // 2 - image_2.get_height() // 2 + 50))
+        font = pygame.font.Font('data/19151.ttf', 60)
+        font_2 = pygame.font.Font('data/10923.otf', 200)
+        t_cont = font.render("Нажмите любую кнопку для продолжения", True, (41, 33, 49))
+        self.screen.blit(t_cont, (w // 2 - t_cont.get_width() // 2, h - 90))
+        t_esc = font_2.render("ADVENTURE", True, (81, 58, 100))
+        self.screen.blit(t_esc, (w // 2 - t_cont.get_width() // 2, h - 900))
         pygame.display.flip()
 
     def run(self):
