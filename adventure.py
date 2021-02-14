@@ -13,25 +13,6 @@ def load_map(map):
     return vsv
 
 
-class end:
-    def __init__(self, screen):
-        self.screen = screen
-        self.st()
-
-    def st(self):
-        w, h = pygame.display.get_surface().get_size()
-        screen.fill((24, 23, 28))
-        image_2 = load_image('dragon_2.png')
-        screen.blit(image_2, (w // 2 - image_2.get_width() // 2, h // 2 - image_2.get_height() // 2 + 50))
-        font = pygame.font.Font('data/19151.ttf', 60)
-        font_2 = pygame.font.Font('data/10923.otf', 200)
-        t_cont = font.render("Нажмите любую кнопку для продолжения", True, (41, 33, 49))
-        self.screen.blit(t_cont, (w // 2 - t_cont.get_width() // 2, h - 90))
-        t_esc = font_2.render("ИГРА ПРОЙДЕНА", True, (81, 58, 100))
-        self.screen.blit(t_esc, (w // 2 - t_esc.get_width() // 2, h - 900))
-        pygame.display.flip()
-
-
 def load_image(name):
     fullname = os.path.join('data', name)
     if not os.path.isfile(fullname):
@@ -63,6 +44,7 @@ pygame.mouse.set_visible(False)
 
 sound_died = pygame.mixer.Sound(os.path.join('data', 'smert.mp3'))  # звук смерти
 sound_take = pygame.mixer.Sound(os.path.join('data', 'take.mp3'))  # звук взятия предмета
+sound_stan = pygame.mixer.Sound(os.path.join('data', 'duck.mp3')) # звук утки
 
 # screen = pygame.display.set_mode((100, 100), pygame.RESIZABLE)
 # screen = pygame.display.set_mode((0, 0), pygame.FULLSCREEN)
@@ -103,6 +85,7 @@ class GR(pygame.sprite.Sprite):
 class Dragon(pygame.sprite.Sprite):
     def __init__(self, grp, rct, clr=None):
         super().__init__(grp)
+        self.staned = False
         self.image = load_image("dragon.png")
         self.image = pygame.transform.rotozoom(self.image, 0, ((rct[2] / self.image.get_width()) + (rct[3] / self.image.get_height()) / 2))
         self.rect = self.image.get_rect()
@@ -125,6 +108,12 @@ class Dragon(pygame.sprite.Sprite):
 
         self.rect = self.rect.move(x, y)
 
+    def stan(self):
+        self.staned = True
+        sound_stan.play()
+        self.image = load_image("dragon_stan.png")
+        self.image = pygame.transform.rotozoom(self.image, 0, ((self.rect[2] / self.image.get_width()) + (self.rect[3] / self.image.get_height()) / 2))
+
 
 class Player(pygame.sprite.Sprite):
     def __init__(self, grp, rct, clr):
@@ -136,6 +125,7 @@ class Player(pygame.sprite.Sprite):
         self.rect = self.image.get_rect()
         self.rect.x, self.rect.y = rct[0], rct[1]
         self.items = []
+        self.end = False
 
     def update(self, mm1, mm2, borders):
         self.rect = self.rect.move(mm1 * self.step, mm2 * self.step)
@@ -242,7 +232,7 @@ class inventory:
                            "key_8": ["key.png", pygame.Color(0, 0, 0)],
                            "key_23": ["key.png", pygame.Color(255, 255, 255)],
                            "wall_5": ["cheat_wall.png", pygame.Color(18, 10, 143)],
-                           "wall_20": ["cheat_wall.png", pygame.Color(18, 10, 143)]}
+                           "wall_20": ["cheat_wall.png", pygame.Color(248, 10, 0)]}
         self.st()
         self.run()
 
@@ -257,7 +247,10 @@ class inventory:
         h_step = 10
         h_max = 0
         for it in self.items:
-            image = set_color_for_img(load_image(self.item_photo[it][0]), self.item_photo[it][1])
+            if self.item_photo[it][1]:
+                image = set_color_for_img(load_image(self.item_photo[it][0]), self.item_photo[it][1])
+            else:
+                image = load_image(self.item_photo[it][0])
             image = pygame.transform.rotozoom(image, 0, ((w_size / image.get_width()) + (h_size / image.get_height()) / 2))
             if w_step + image.get_width() > w_n:
                 w_step = 10
@@ -296,7 +289,7 @@ class play:  # класс для карт (от него наследуются 
         self.run()
 
     def run(self):  # главный цикл
-        running = True
+        running = True if self.player.end is False else False
         global walk_w, walk_a, walk_s, walk_d
         while running:
             # обработка событий
@@ -353,11 +346,16 @@ class play:  # класс для карт (от него наследуются 
                 self.player.update(1, 0, self.borders)
 
             if "dragon" in self.__dir__():  # движение дракона
-                self.dragon.update(self.player.rect[0], self.player.rect[1], self.player.step)
-                if pygame.sprite.collide_rect(self.player, self.dragon):
-                    sound_died.play()
-                    gameover(screen)
-                    running = False
+                if not self.dragon.staned:
+                    self.dragon.update(self.player.rect[0], self.player.rect[1], self.player.step)
+                if "sword" not in self.player.items:
+                    if pygame.sprite.collide_rect(self.player, self.dragon):
+                        sound_died.play()
+                        gameover(screen)
+                        running = False
+                else:
+                    if pygame.sprite.collide_rect(self.player, self.dragon):
+                        self.dragon.stan()
 
             for tg in self.trigger.keys():  # не пришел ли пользователь в триггер
                 if pygame.sprite.collide_rect(self.player, tg):
@@ -419,6 +417,39 @@ class play:  # класс для карт (от него наследуются 
         pygame.display.flip()
 
 
+class end:
+    def __init__(self, screen):
+        self.screen = screen
+        self.st()
+        self.run()
+
+    def st(self):
+        w, h = pygame.display.get_surface().get_size()
+        screen.fill((24, 23, 28))
+        image_2 = load_image('dragon_2.png')
+        screen.blit(image_2, (w // 2 - image_2.get_width() // 2, h // 2 - image_2.get_height() // 2 + 50))
+        font = pygame.font.Font('data/19151.ttf', 60)
+        font_2 = pygame.font.Font('data/10923.otf', 200)
+        t_cont = font.render("Нажмите любую кнопку для продолжения", True, (41, 33, 49))
+        self.screen.blit(t_cont, (w // 2 - t_cont.get_width() // 2, h - 90))
+        t_esc = font_2.render("ИГРА ПРОЙДЕНА", True, (81, 58, 100))
+        self.screen.blit(t_esc, (w // 2 - t_esc.get_width() // 2, h - 900))
+        pygame.display.flip()
+
+    def run(self):
+        running = True
+        while running:
+            for event in pygame.event.get():
+                if event.type == QUIT:
+                    running = False
+
+                if event.type == KEYDOWN:
+                    running = False
+                else:
+                    self.st()
+                    pygame.display.flip()
+
+
 class map_zero(play):
     def init(self):
         w_n, h_n = pygame.display.get_surface().get_size()
@@ -429,6 +460,16 @@ class map_zero(play):
         self.gran = []
         for i in load_map(mas_map_26[::]):  # загрузка карты
             self.gran.append(eval(i))
+
+    def open_castle(self, w, h):
+        for i in ["key_1", "key_8", "key_23", "cup", "wall_5", "wall_20"]:
+            if i in self.player.items:
+                self.player.end = True
+            else:
+                self.player.end = False
+                break
+        if self.player.end is True:
+            end(self.screen)
 
 
 class map_1(play):
@@ -902,7 +943,8 @@ items_onmap = {map_17: {"key_1": "Item('key.png', self.all_sprites, (w * 7, h * 
                map_20: {"cup": "Item('cup.png', self.all_sprites, (w * 30, h * 10, w * 2, h))"},  # кубок
                map_21: {"key_8": "Item('key.png', self.all_sprites, (w * 8, h * 20, w * 2, h), pygame.Color(0, 0, 0))"},  # для черного замка
                map_26: {"wall_20": "Item('cheat_wall.png', self.all_sprites, (w * 18, h * 18, w * 2, h * 2), pygame.Color(248, 10, 0))"},
-               map_28: {"wall_5": "Item('cheat_wall.png', self.all_sprites, (w * 18, h * 18, w * 2, h * 2), pygame.Color(18, 10, 143))"}}
+               map_28: {"wall_5": "Item('cheat_wall.png', self.all_sprites, (w * 18, h * 18, w * 2, h * 2), pygame.Color(18, 10, 143))"},
+               map_zero: {"sword": "Item('sword.png', self.all_sprites, (w * 20, h * 20, w, h))"}}
 
 
 start(screen)
