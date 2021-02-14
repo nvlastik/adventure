@@ -47,8 +47,8 @@ sound_take = pygame.mixer.Sound(os.path.join('data', 'take.mp3'))  # звук в
 sound_stan = pygame.mixer.Sound(os.path.join('data', 'duck.mp3')) # звук утки
 
 # screen = pygame.display.set_mode((100, 100), pygame.RESIZABLE)
-# screen = pygame.display.set_mode((0, 0), pygame.FULLSCREEN)
-screen = pygame.display.set_mode((1900, 1000), pygame.RESIZABLE)
+screen = pygame.display.set_mode((0, 0), pygame.FULLSCREEN)
+# screen = pygame.display.set_mode((1900, 1000), pygame.RESIZABLE)
 pygame.display.set_caption('Adventure')
 
 
@@ -60,7 +60,6 @@ class Trigger:
 class Item(pygame.sprite.Sprite):
     def __init__(self, file, grp, rct, clr=None, key=None):
         super().__init__(grp)
-        print(key)
         self.image = load_image(file)
         self.image = pygame.transform.rotozoom(self.image, 0, ((rct[2] / self.image.get_width()) + (rct[3] / self.image.get_height()) / 2))
         self.image.set_colorkey(key)
@@ -118,7 +117,7 @@ class Dragon(pygame.sprite.Sprite):
 class Player(pygame.sprite.Sprite):
     def __init__(self, grp, rct, clr):
         super().__init__(grp)
-        self.step = 10
+        self.step = 7
         self.color = clr
         self.image = pygame.Surface((rct[2], rct[3]))
         self.image.fill(self.color)
@@ -167,7 +166,6 @@ class start:
         running = True
         while running:
             for event in pygame.event.get():
-                print(event)
                 if event.type == QUIT:
                     running = False
 
@@ -279,7 +277,6 @@ class inventory:
 
 class play:  # класс для карт (от него наследуются карты)
     def __init__(self, screen, spawn, pl=None):
-        print(self.__class__)
         self.pl = pl  # объект player, который может быть передан на карту
         self.items_spr = {}  # объекты предметов (ключей) в виде {кодовое_имя: спрайт}
         self.spawn = spawn
