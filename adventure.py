@@ -44,7 +44,8 @@ pygame.mouse.set_visible(False)  # отключаем курсор
 
 sound_died = pygame.mixer.Sound(os.path.join('data', 'smert.mp3'))  # звук смерти
 sound_take = pygame.mixer.Sound(os.path.join('data', 'take.mp3'))  # звук взятия предмета
-sound_stan = pygame.mixer.Sound(os.path.join('data', 'duck.mp3')) # звук утки
+sound_stan = pygame.mixer.Sound(os.path.join('data', 'duck.mp3'))  # звук утки
+sound_finish = pygame.mixer.Sound(os.path.join('data', 'finish.mp3'))  # звук окончания игры
 
 # screen = pygame.display.set_mode((100, 100), pygame.RESIZABLE)
 screen = pygame.display.set_mode((0, 0), pygame.FULLSCREEN)
@@ -177,7 +178,6 @@ class start:  # старт игры
                         break
                 else:
                     self.st()
-                    pygame.display.flip()
 
 
 class gameover:  # проигрыш. при попадании на дракона
@@ -409,6 +409,7 @@ class end:  # конечная заставка
     def __init__(self, screen):
         self.screen = screen
         self.st()
+        sound_finish.play()
         self.run()
 
     def st(self):
@@ -418,7 +419,7 @@ class end:  # конечная заставка
         screen.blit(image_2, (w // 2 - image_2.get_width() // 2, h // 2 - image_2.get_height() // 2 + 50))
         font = pygame.font.Font('data/19151.ttf', 60)
         font_2 = pygame.font.Font('data/10923.otf', 200)
-        t_cont = font.render("Нажмите любую кнопку для продолжения", True, (41, 33, 49))
+        t_cont = font.render("Нажмите любую кнопку для выхода", True, (41, 33, 49))
         self.screen.blit(t_cont, (w // 2 - t_cont.get_width() // 2, h - 90))
         t_esc = font_2.render("ИГРА ПРОЙДЕНА", True, (81, 58, 100))
         self.screen.blit(t_esc, (w // 2 - t_esc.get_width() // 2, h - 900))
