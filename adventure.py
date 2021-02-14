@@ -4,7 +4,7 @@ from maps import *
 import os
 
 
-def load_map(map):
+def load_map(map):  # функция загрузки карт
     vsv = []
     for y, i in enumerate(map):
         for x, j in enumerate(i):
@@ -13,7 +13,7 @@ def load_map(map):
     return vsv
 
 
-def load_image(name):
+def load_image(name):  # загрузка изображения
     fullname = os.path.join('data', name)
     if not os.path.isfile(fullname):
         print(f"Файл с изображением '{fullname}' не найден")
@@ -23,7 +23,7 @@ def load_image(name):
     return image
 
 
-def set_color_for_img(img, color):
+def set_color_for_img(img, color):  # функция установки цвета на фото
     for x in range(img.get_width()):
         for y in range(img.get_height()):
             color.a = img.get_at((x, y)).a
@@ -31,7 +31,7 @@ def set_color_for_img(img, color):
     return img
 
 
-walk_w = False
+walk_w = False  # ходьба
 walk_a = False
 walk_s = False
 walk_d = False
@@ -40,7 +40,7 @@ fps = 120
 clock = pygame.time.Clock()
 
 pygame.init()
-pygame.mouse.set_visible(False)
+pygame.mouse.set_visible(False)  # отключаем курсор
 
 sound_died = pygame.mixer.Sound(os.path.join('data', 'smert.mp3'))  # звук смерти
 sound_take = pygame.mixer.Sound(os.path.join('data', 'take.mp3'))  # звук взятия предмета
@@ -52,27 +52,27 @@ screen = pygame.display.set_mode((0, 0), pygame.FULLSCREEN)
 pygame.display.set_caption('Adventure')
 
 
-class Trigger:
+class Trigger:  # триггер
     def __init__(self, rect):
         self.rect = rect
 
 
-class Item(pygame.sprite.Sprite):
+class Item(pygame.sprite.Sprite):  # класс предмета
     def __init__(self, file, grp, rct, clr=None, key=None):
         super().__init__(grp)
         self.image = load_image(file)
-        self.image = pygame.transform.rotozoom(self.image, 0, ((rct[2] / self.image.get_width()) + (rct[3] / self.image.get_height()) / 2))
+        self.image = pygame.transform.rotozoom(self.image, 0, ((rct[2] / self.image.get_width()) + (rct[3] / self.image.get_height()) / 2))  # изменение размера
         self.image.set_colorkey(key)
         self.rect = self.image.get_rect()
         self.rect.x, self.rect.y = rct[0], rct[1]
         if clr:
             set_color_for_img(self.image, clr)
 
-    def set_color(self, clr):
+    def set_color(self, clr):  # установка цвета предмета
         set_color_for_img(self.image, clr)
 
 
-class GR(pygame.sprite.Sprite):
+class GR(pygame.sprite.Sprite):  # границы
     def __init__(self, grp, rct, clr):
         super().__init__(grp)
         self.image = pygame.Surface((rct[2], rct[3]))
@@ -81,10 +81,10 @@ class GR(pygame.sprite.Sprite):
         self.rect.x, self.rect.y = rct[0], rct[1]
 
 
-class Dragon(pygame.sprite.Sprite):
+class Dragon(pygame.sprite.Sprite):  # класс дракона
     def __init__(self, grp, rct, clr=None):
         super().__init__(grp)
-        self.staned = False
+        self.staned = False  # заморожен ли дракон
         self.image = load_image("dragon.png")
         self.image = pygame.transform.rotozoom(self.image, 0, ((rct[2] / self.image.get_width()) + (rct[3] / self.image.get_height()) / 2))
         self.rect = self.image.get_rect()
@@ -92,7 +92,7 @@ class Dragon(pygame.sprite.Sprite):
         if clr:
             set_color_for_img(self.image, clr)
 
-    def update(self, player_x, player_y, step_player):
+    def update(self, player_x, player_y, step_player):  # изменение местоположение дракона
         x = 0
         y = 0
         if player_x > self.rect.x:
@@ -107,45 +107,44 @@ class Dragon(pygame.sprite.Sprite):
 
         self.rect = self.rect.move(x, y)
 
-    def stan(self):
+    def stan(self):  # заморозка дракона
         self.staned = True
         sound_stan.play()
         self.image = load_image("dragon_stan.png")
         self.image = pygame.transform.rotozoom(self.image, 0, ((self.rect[2] / self.image.get_width()) + (self.rect[3] / self.image.get_height()) / 2))
 
 
-class Player(pygame.sprite.Sprite):
+class Player(pygame.sprite.Sprite):  # главные класс игрока
     def __init__(self, grp, rct, clr):
         super().__init__(grp)
-        self.step = 7
-        self.color = clr
+        self.step = 7  # количество шагов за один раз
+        self.color = clr  # цвет
         self.image = pygame.Surface((rct[2], rct[3]))
         self.image.fill(self.color)
         self.rect = self.image.get_rect()
         self.rect.x, self.rect.y = rct[0], rct[1]
-        self.items = []
-        self.end = False
+        self.items = []  # массив
+        self.end = False  # конец игры
 
-    def update(self, mm1, mm2, borders):
+    def update(self, mm1, mm2, borders):  # update игрока
         self.rect = self.rect.move(mm1 * self.step, mm2 * self.step)
         if any([pygame.sprite.collide_rect(self, i) for i in borders]):  # если пересекается потом граница
             self.rect = self.rect.move(-mm1 * self.step, -mm2 * self.step)
 
-    def set_color(self, clr):
+    def set_color(self, clr):  # изменение цвета
         self.color = clr
         self.image.fill(self.color)
 
-    def spawn(self, rct):
+    def spawn(self, rct):  # размещение игрока на карте
         self.image = pygame.Surface((rct[2], rct[3]))
         self.image.fill(self.color)
         self.rect = self.image.get_rect()
         self.rect.x, self.rect.y = rct[0], rct[1]
 
 
-class start:
+class start:  # старт игры
     def __init__(self, screen):
         self.screen = screen
-
         self.st()
         self.run()
 
@@ -168,7 +167,6 @@ class start:
             for event in pygame.event.get():
                 if event.type == QUIT:
                     running = False
-
                 if event.type == KEYDOWN:
                     kk = pygame.key.get_pressed()
                     if kk[K_ESCAPE]:
@@ -177,13 +175,12 @@ class start:
                         running = False
                         map_1(self.screen, "(w * 19, h * 28, w, h * 2)")
                         break
-
                 else:
                     self.st()
                     pygame.display.flip()
 
 
-class gameover:
+class gameover:  # проигрыш. при попадании на дракона
     def __init__(self, screen):
         self.screen = screen
         self.st()
@@ -192,18 +189,13 @@ class gameover:
     def st(self):
         w, h = pygame.display.get_surface().get_size()
         screen.fill((161, 71, 221))
-        pygame.draw.rect(self.screen, (184, 182, 184),
-                         ((w // 20), (h // 20), ((w // 20) * 18), ((h // 20) * 18)))
-        pygame.draw.rect(self.screen, (184, 182, 184),
-                         (((w // 20) * 8), ((h // 20) * 18), ((w // 20) * 4), ((h // 20) * 3)))
-
+        pygame.draw.rect(self.screen, (184, 182, 184), ((w // 20), (h // 20), ((w // 20) * 18), ((h // 20) * 18)))
+        pygame.draw.rect(self.screen, (184, 182, 184), (((w // 20) * 8), ((h // 20) * 18), ((w // 20) * 4), ((h // 20) * 3)))
         font = pygame.font.Font(None, 100)
         t_cont = font.render("GAME OVER", True, (66, 187, 79))
-        self.screen.blit(t_cont,
-                         (w // 2 - t_cont.get_width() // 2, h // 2 - t_cont.get_height() // 2))
+        self.screen.blit(t_cont, (w // 2 - t_cont.get_width() // 2, h // 2 - t_cont.get_height() // 2))
         t_esc = font.render("Для выхода нажмите ESC", True, (66, 187, 79))
-        self.screen.blit(t_esc,
-                         (w // 2 - t_cont.get_width(), h // 2 + t_esc.get_height() // 2))
+        self.screen.blit(t_esc, (w // 2 - t_cont.get_width(), h // 2 + t_esc.get_height() // 2))
         pygame.display.flip()
 
     def run(self):
@@ -212,7 +204,6 @@ class gameover:
             for event in pygame.event.get():
                 if event.type == QUIT:
                     running = False
-
                 if event.type == KEYDOWN:
                     kk = pygame.key.get_pressed()
                     if kk[K_ESCAPE]:
@@ -222,7 +213,7 @@ class gameover:
                     pygame.display.flip()
 
 
-class inventory:
+class inventory:  # открытие инвертаря. E
     def __init__(self, screen, items):
         self.screen = screen
         self.items = items
@@ -230,7 +221,9 @@ class inventory:
                            "key_8": ["key.png", pygame.Color(0, 0, 0)],
                            "key_23": ["key.png", pygame.Color(255, 255, 255)],
                            "wall_5": ["cheat_wall.png", pygame.Color(18, 10, 143)],
-                           "wall_20": ["cheat_wall.png", pygame.Color(248, 10, 0)]}
+                           "wall_20": ["cheat_wall.png", pygame.Color(248, 10, 0)],
+                           "sword": ["sword.png", None],
+                           "cup": ["cup.png", None]}
         self.st()
         self.run()
 
@@ -240,17 +233,16 @@ class inventory:
         screen.fill((184, 182, 184))
         w_size = w * 3
         h_size = h * 3
-
         w_step = 10
         h_step = 10
         h_max = 0
-        for it in self.items:
-            if self.item_photo[it][1]:
+        for it in self.items:  # размещение предметов
+            if self.item_photo[it][1]:  # если есть цвет
                 image = set_color_for_img(load_image(self.item_photo[it][0]), self.item_photo[it][1])
             else:
                 image = load_image(self.item_photo[it][0])
             image = pygame.transform.rotozoom(image, 0, ((w_size / image.get_width()) + (h_size / image.get_height()) / 2))
-            if w_step + image.get_width() > w_n:
+            if w_step + image.get_width() > w_n:  # перенос на следующую строчку
                 w_step = 10
                 screen.blit(image, (w_step, h_max + h_step))
                 h_step += h_max + 10
@@ -267,7 +259,6 @@ class inventory:
             for event in pygame.event.get():
                 if event.type == QUIT:
                     running = False
-
                 if event.type == KEYDOWN:
                     running = False
                 else:
@@ -343,9 +334,9 @@ class play:  # класс для карт (от него наследуются 
                 self.player.update(1, 0, self.borders)
 
             if "dragon" in self.__dir__():  # движение дракона
-                if not self.dragon.staned:
+                if not self.dragon.staned:  # если не заморожен
                     self.dragon.update(self.player.rect[0], self.player.rect[1], self.player.step)
-                if "sword" not in self.player.items:
+                if "sword" not in self.player.items:  # если нет меча
                     if pygame.sprite.collide_rect(self.player, self.dragon):
                         sound_died.play()
                         gameover(screen)
@@ -414,7 +405,7 @@ class play:  # класс для карт (от него наследуются 
         pygame.display.flip()
 
 
-class end:
+class end:  # конечная заставка
     def __init__(self, screen):
         self.screen = screen
         self.st()
@@ -935,9 +926,10 @@ class map_28(play):
             self.gran.append(eval(i))
 
 
+# размещение вещей
 items_onmap = {map_17: {"key_1": "Item('key.png', self.all_sprites, (w * 7, h * 20, w * 2, h), pygame.Color(239, 223, 37))"},  # для желтого замка
                map_6: {"key_23": "Item('key.png', self.all_sprites, (w * 33, h * 20, w * 2, h), pygame.Color(255, 255, 255))"},  # для белого замка
-               map_20: {"cup": "Item('cup.png', self.all_sprites, (w * 30, h * 10, w * 2, h))"},  # кубок
+               map_9: {"cup": "Item('cup.png', self.all_sprites, (w * 30, h * 10, w * 2, h))"},  # кубок
                map_21: {"key_8": "Item('key.png', self.all_sprites, (w * 8, h * 20, w * 2, h), pygame.Color(0, 0, 0))"},  # для черного замка
                map_26: {"wall_20": "Item('cheat_wall.png', self.all_sprites, (w * 18, h * 18, w * 2, h * 2), pygame.Color(248, 10, 0))"},
                map_28: {"wall_5": "Item('cheat_wall.png', self.all_sprites, (w * 18, h * 18, w * 2, h * 2), pygame.Color(18, 10, 143))"},
