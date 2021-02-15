@@ -48,8 +48,8 @@ sound_stan = pygame.mixer.Sound(os.path.join('data', 'duck.mp3'))  # звук у
 sound_finish = pygame.mixer.Sound(os.path.join('data', 'finish.mp3'))  # звук окончания игры
 
 # screen = pygame.display.set_mode((100, 100), pygame.RESIZABLE)
-screen = pygame.display.set_mode((0, 0), pygame.FULLSCREEN)
-# screen = pygame.display.set_mode((1900, 1000), pygame.RESIZABLE)
+# screen = pygame.display.set_mode((0, 0), pygame.FULLSCREEN)
+screen = pygame.display.set_mode((1900, 1000), pygame.RESIZABLE)
 pygame.display.set_caption('Adventure')
 
 
@@ -888,7 +888,7 @@ class map_26(play):
         w_n, h_n = pygame.display.get_surface().get_size()
         w, h = w_n // 40, h_n // 40
         self.trigger = {
-            Trigger((w * 15, h * 38, w * 8, h * 2)): [map_27, "(w * 17, h * 5, w, h * 2)"]}
+            Trigger((w * 15, h * 38, w * 10, h * 2)): [map_27, "(w * 17, h * 5, w, h * 2)"]}
         self.c_main = (184, 182, 184)
         self.c_sec = (138, 0, 255)
         self.gran = []
